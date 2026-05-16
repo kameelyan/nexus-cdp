@@ -425,6 +425,59 @@ export default function SubscriptionsPage() {
           </table>
         </div>
       )}
+
+      {/* Payload Reference */}
+      <div className="mt-10 bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-700">
+          <h2 className="text-sm font-semibold text-slate-200">Webhook Request Format</h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Every signal firing is delivered as an HTTP POST to your target URL with the following headers and body.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">
+          {/* Headers */}
+          <div className="px-5 py-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Request Headers</p>
+            <div className="space-y-2 font-mono text-xs">
+              {[
+                ['Content-Type', 'application/json'],
+                ['X-Nexus-Signature', 'sha256=<hmac-sha256>'],
+                ['X-Nexus-Firing-Id', '<firingId>'],
+                ['X-Nexus-Signal-Id', '<signalId>'],
+                ['X-Nexus-Timestamp', '<firedAt ISO 8601>'],
+              ].map(([key, val]) => (
+                <div key={key} className="flex gap-2 flex-wrap">
+                  <span className="text-indigo-400">{key}:</span>
+                  <span className="text-slate-300">{val}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-4 leading-relaxed">
+              The <span className="text-slate-300 font-mono">X-Nexus-Signature</span> is an HMAC-SHA256 of the raw
+              request body, signed with your subscription secret. Verify it to confirm the request is authentic.
+            </p>
+          </div>
+
+          {/* Body */}
+          <div className="px-5 py-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Request Body</p>
+            <pre className="text-xs font-mono text-slate-300 bg-slate-900 rounded-lg p-4 overflow-x-auto leading-relaxed">{`{
+  "firingId":     "uuid",
+  "signalId":     "uuid",
+  "signalName":   "Active Driver",
+  "profileId":    "uuid",
+  "fingerprint":  "fp_abc123",
+  "userId":       "user_456",
+  "matchedEvents": [
+    "event-uuid-1",
+    "event-uuid-2"
+  ],
+  "firedAt":      "2026-05-16T12:00:00.000Z"
+}`}</pre>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
