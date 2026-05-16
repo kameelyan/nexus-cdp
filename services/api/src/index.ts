@@ -13,15 +13,7 @@ import {
   getDeliveriesForSubscription,
   listRecentDeliveries,
 } from './subscriptions.js';
-import {
-  createActiveDriverOffers,
-  createHighPurchaseIntentOffer,
-  createLoyaltyMilestoneOffer,
-  createRecentRenterOffer,
-  createDealershipWalkInOffer,
-  createLapsedCustomerOffer,
-  getOffersForProfile,
-} from './offers.js';
+import { createOfferForSignal, getOffersForProfile } from './offers.js';
 import type { EventInput, SignalInput, WebhookSubscriptionInput } from '@nexus/types';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -297,43 +289,11 @@ app.post('/webhooks/offers', async (req, reply) => {
     firingId: string;
   };
 
-  if (firing.signalName === 'Active Driver') {
-    await createActiveDriverOffers(firing.profileId, firing.signalId, firing.firingId);
-    console.log(`[offers] created Active Driver offers for profile ${firing.profileId}`);
-    return reply.code(200).send({ ok: true });
-  }
-
-  if (firing.signalName === 'High Purchase Intent') {
-    await createHighPurchaseIntentOffer(firing.profileId, firing.signalId, firing.firingId);
-    console.log(`[offers] created High Purchase Intent offer for profile ${firing.profileId}`);
-    return reply.code(200).send({ ok: true });
-  }
-
-  if (firing.signalName === 'Loyalty Milestone Approaching') {
-    await createLoyaltyMilestoneOffer(firing.profileId, firing.signalId, firing.firingId);
-    console.log(`[offers] created Loyalty Milestone offer for profile ${firing.profileId}`);
-    return reply.code(200).send({ ok: true });
-  }
-
-  if (firing.signalName === 'Recent Renter Browsing') {
-    await createRecentRenterOffer(firing.profileId, firing.signalId, firing.firingId);
-    console.log(`[offers] created Recent Renter offer for profile ${firing.profileId}`);
-    return reply.code(200).send({ ok: true });
-  }
-
-  if (firing.signalName === 'Dealership Walk-In') {
-    await createDealershipWalkInOffer(firing.profileId, firing.signalId, firing.firingId);
-    console.log(`[offers] created Dealership Walk-In offer for profile ${firing.profileId}`);
-    return reply.code(200).send({ ok: true });
-  }
-
-  if (firing.signalName === 'Lapsed High-Value Customer') {
-    await createLapsedCustomerOffer(firing.profileId, firing.signalId, firing.firingId);
-    console.log(`[offers] created Lapsed Customer offer for profile ${firing.profileId}`);
-    return reply.code(200).send({ ok: true });
-  }
-
-  return reply.code(200).send({ ok: true, message: 'Signal not handled' });
+  const handled = await createOfferForSignal(
+    firing.profileId, firing.signalId, firing.firingId, firing.signalName
+  );
+  console.log(`[offers] ${firing.signalName} → profile ${firing.profileId} (handled: ${handled})`);
+  return reply.code(200).send({ ok: true, handled });
 });
 
 app.get('/profiles/:profileId/offers', async (req) => {
