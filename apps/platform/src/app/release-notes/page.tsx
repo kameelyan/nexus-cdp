@@ -10,8 +10,47 @@ export default function ReleaseNotesPage() {
 
       <div className="space-y-10">
 
+        {/* v1.4 */}
+        <Release version="1.4" date="May 16, 2026" label="latest">
+          <Section title="Offer Engine">
+            <Item type="new">
+              All 6 signals now generate personalized offers on the Apex Rewards portal via webhook.
+              New offers: <strong>Double Points Weekend</strong> (Loyalty Milestone Approaching),{' '}
+              <strong>$500 Renter-to-Owner Credit</strong> (Recent Renter Browsing),{' '}
+              <strong>In-Store Exclusive — Valid Today Only</strong> (Dealership Walk-In), and{' '}
+              <strong>Welcome Back — 1,000 Bonus Points</strong> (Lapsed High-Value Customer).
+            </Item>
+            <Item type="new">
+              Each offer has a distinct expiry tuned to its urgency: Dealership Walk-In expires at
+              midnight the same day, Loyalty Milestone at 7 days, High Purchase Intent at 7 days,
+              Renter-to-Owner at 30 days, Active Driver rewards at 30 days, and Win-Back at 60 days.
+            </Item>
+            <Item type="new">
+              Loyalty portal offer cards each have a unique visual treatment — violet for tier boosts,
+              teal for renter-to-owner, amber with pulse animation for in-store exclusives, and a
+              warm welcome-back style for lapsed customer win-backs.
+            </Item>
+          </Section>
+          <Section title="Webhooks & Platform">
+            <Item type="new">
+              Live <strong>Recent Deliveries</strong> feed on the Webhooks page shows all webhook
+              deliveries across every subscription in real time, updating every 5 seconds with signal
+              name, endpoint, HTTP status, and success/fail badge.
+            </Item>
+            <Item type="new">
+              Loyalty portal offers now appear automatically within 5 seconds of a signal firing —
+              no page refresh required.
+            </Item>
+            <Item type="new">
+              All apps and services versioned at <code>1.4.0</code>. Platform nav reads version
+              from <code>package.json</code> automatically. API <code>/health</code> returns the
+              current version.
+            </Item>
+          </Section>
+        </Release>
+
         {/* v1.3 */}
-        <Release version="1.3" date="May 16, 2026" label="latest">
+        <Release version="1.3" date="May 16, 2026">
           <Section title="Webhooks & Offer Generation">
             <Item type="new">
               Active Driver signal now automatically generates two personalized rewards offers via

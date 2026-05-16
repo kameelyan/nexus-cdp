@@ -232,6 +232,124 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {offers.map((offer) => {
+              if (offer.category === 'milestone') {
+                return (
+                  <div
+                    key={offer.offerId}
+                    className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1e1a35] border-violet-500/20"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="text-2xl">⭐</span>
+                      <span className="bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                        Tier Boost
+                      </span>
+                    </div>
+                    <h3 className="text-white font-bold text-base mb-2 leading-snug">{offer.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-5">{offer.description}</p>
+                    <div className="flex items-center justify-between">
+                      <button className="text-sm font-bold px-4 py-2 rounded-xl transition-colors bg-violet-600 hover:bg-violet-500 text-white">
+                        {offer.cta}
+                      </button>
+                      {offer.expiresAt && (
+                        <span className="text-gray-600 text-xs">Expires {new Date(offer.expiresAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (offer.category === 'renter_to_owner') {
+                return (
+                  <div
+                    key={offer.offerId}
+                    className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1a2b2e] border-teal-500/20"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="text-2xl">🔑</span>
+                      <span className="bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                        $500 Credit
+                      </span>
+                    </div>
+                    <h3 className="text-white font-bold text-base mb-2 leading-snug">{offer.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-5">{offer.description}</p>
+                    <div className="flex items-center justify-between">
+                      <button className="text-sm font-bold px-4 py-2 rounded-xl transition-colors bg-teal-600 hover:bg-teal-500 text-white">
+                        {offer.cta}
+                      </button>
+                      {offer.expiresAt && (
+                        <span className="text-gray-600 text-xs">Expires {new Date(offer.expiresAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (offer.category === 'instore') {
+                return (
+                  <div
+                    key={offer.offerId}
+                    className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#2b1f0a] to-[#1a1a0e] border-amber-500/30 md:col-span-2"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">🏪</span>
+                        <span className="bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide animate-pulse">
+                          Valid Today Only
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-amber-400 text-2xl font-black leading-none">$250</p>
+                        <p className="text-amber-600 text-xs mt-0.5">accessories credit</p>
+                      </div>
+                    </div>
+                    <h3 className="text-white font-bold text-lg mb-2 leading-snug">{offer.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-5 max-w-2xl">{offer.description}</p>
+                    <div className="flex items-center justify-between">
+                      <button className="text-sm font-bold px-5 py-2.5 rounded-xl transition-colors bg-amber-500 hover:bg-amber-400 text-black">
+                        {offer.cta}
+                      </button>
+                      {offer.expiresAt && (
+                        <span className="text-amber-700 text-xs font-medium">
+                          Expires tonight at midnight
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (offer.category === 'winback') {
+                return (
+                  <div
+                    key={offer.offerId}
+                    className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1f1e2e] border-slate-500/30 md:col-span-2"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">💛</span>
+                        <span className="bg-slate-500/20 border border-slate-500/30 text-slate-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                          Welcome Back
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[#f5c518] text-2xl font-black leading-none">+1,000</p>
+                        <p className="text-[#f5c518]/60 text-xs mt-0.5">bonus points added</p>
+                      </div>
+                    </div>
+                    <h3 className="text-white font-bold text-lg mb-2 leading-snug">{offer.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-5 max-w-2xl">{offer.description}</p>
+                    <div className="flex items-center justify-between">
+                      <button className="text-sm font-bold px-5 py-2.5 rounded-xl transition-colors bg-slate-600 hover:bg-slate-500 text-white">
+                        {offer.cta}
+                      </button>
+                      {offer.expiresAt && (
+                        <span className="text-gray-600 text-xs">Expires {new Date(offer.expiresAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
               if (offer.category === 'discount') {
                 const originalPrice = 42500;
                 const discountedPrice = Math.round(originalPrice * 0.95);

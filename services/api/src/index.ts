@@ -13,7 +13,15 @@ import {
   getDeliveriesForSubscription,
   listRecentDeliveries,
 } from './subscriptions.js';
-import { createActiveDriverOffers, createHighPurchaseIntentOffer, getOffersForProfile } from './offers.js';
+import {
+  createActiveDriverOffers,
+  createHighPurchaseIntentOffer,
+  createLoyaltyMilestoneOffer,
+  createRecentRenterOffer,
+  createDealershipWalkInOffer,
+  createLapsedCustomerOffer,
+  getOffersForProfile,
+} from './offers.js';
 import type { EventInput, SignalInput, WebhookSubscriptionInput } from '@nexus/types';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -298,6 +306,30 @@ app.post('/webhooks/offers', async (req, reply) => {
   if (firing.signalName === 'High Purchase Intent') {
     await createHighPurchaseIntentOffer(firing.profileId, firing.signalId, firing.firingId);
     console.log(`[offers] created High Purchase Intent offer for profile ${firing.profileId}`);
+    return reply.code(200).send({ ok: true });
+  }
+
+  if (firing.signalName === 'Loyalty Milestone Approaching') {
+    await createLoyaltyMilestoneOffer(firing.profileId, firing.signalId, firing.firingId);
+    console.log(`[offers] created Loyalty Milestone offer for profile ${firing.profileId}`);
+    return reply.code(200).send({ ok: true });
+  }
+
+  if (firing.signalName === 'Recent Renter Browsing') {
+    await createRecentRenterOffer(firing.profileId, firing.signalId, firing.firingId);
+    console.log(`[offers] created Recent Renter offer for profile ${firing.profileId}`);
+    return reply.code(200).send({ ok: true });
+  }
+
+  if (firing.signalName === 'Dealership Walk-In') {
+    await createDealershipWalkInOffer(firing.profileId, firing.signalId, firing.firingId);
+    console.log(`[offers] created Dealership Walk-In offer for profile ${firing.profileId}`);
+    return reply.code(200).send({ ok: true });
+  }
+
+  if (firing.signalName === 'Lapsed High-Value Customer') {
+    await createLapsedCustomerOffer(firing.profileId, firing.signalId, firing.firingId);
+    console.log(`[offers] created Lapsed Customer offer for profile ${firing.profileId}`);
     return reply.code(200).send({ ok: true });
   }
 
