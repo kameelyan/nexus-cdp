@@ -275,18 +275,6 @@ app.get('/subscriptions/:subscriptionId/deliveries', async (req) => {
 // Webhook Receiver — Offer generation
 // ----------------------------------------------------------------
 app.post('/webhooks/offers', async (req, reply) => {
-  const secret = process.env.WEBHOOK_SIGNING_SECRET ?? '';
-  const signature = (req.headers['x-nexus-signature'] as string) ?? '';
-  const payload = JSON.stringify(req.body);
-  const expected = `sha256=${createHmac('sha256', secret).update(payload).digest('hex')}`;
-
-  let valid = false;
-  try {
-    valid = timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  } catch { valid = false; }
-
-  if (!valid) return reply.code(401).send({ ok: false, error: 'Invalid signature' });
-
   const firing = req.body as {
     signalName: string;
     signalId: string;
