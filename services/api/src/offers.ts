@@ -18,6 +18,30 @@ const ACTIVE_DRIVER_OFFERS = [
   },
 ];
 
+const HIGH_PURCHASE_INTENT_OFFER = {
+  category: 'discount',
+  title: '5% Off Your Next Apex Vehicle',
+  description:
+    "You've been doing your research — now it's time to make it yours. As a valued Apex Rewards member, you've unlocked an exclusive 5% discount on any new Apex vehicle purchase. This offer is yours for the next 7 days. Speak with an advisor, configure your ideal build, and let us make your next chapter the best drive of your life.",
+  cta: 'Browse Vehicles',
+};
+
+export async function createHighPurchaseIntentOffer(
+  profileId: string,
+  signalId: string,
+  firingId: string
+): Promise<void> {
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const o = HIGH_PURCHASE_INTENT_OFFER;
+  await query(
+    `INSERT INTO profile_offers
+       (offer_id, profile_id, signal_id, firing_id, title, description, cta, category, expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (firing_id, category) DO NOTHING`,
+    [uuidv4(), profileId, signalId, firingId, o.title, o.description, o.cta, o.category, expiresAt]
+  );
+}
+
 export async function createActiveDriverOffers(
   profileId: string,
   signalId: string,

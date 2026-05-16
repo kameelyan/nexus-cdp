@@ -232,6 +232,53 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {offers.map((offer) => {
+              if (offer.category === 'discount') {
+                const originalPrice = 42500;
+                const discountedPrice = Math.round(originalPrice * 0.95);
+                return (
+                  <div
+                    key={offer.offerId}
+                    className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1a1f35] border-indigo-500/20 md:col-span-2"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">🏷️</span>
+                        <span className="bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+                          Member Exclusive
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-gray-500 text-xs line-through">
+                          From ${originalPrice.toLocaleString()}
+                        </p>
+                        <p className="text-white text-2xl font-black leading-none">
+                          ${discountedPrice.toLocaleString()}
+                        </p>
+                        <p className="text-indigo-400 text-xs font-semibold mt-0.5">5% member discount applied</p>
+                      </div>
+                    </div>
+
+                    <h3 className="text-white font-bold text-lg mb-2 leading-snug">
+                      {offer.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-5 max-w-2xl">
+                      {offer.description}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <button className="text-sm font-bold px-5 py-2.5 rounded-xl transition-colors bg-indigo-600 hover:bg-indigo-500 text-white">
+                        {offer.cta}
+                      </button>
+                      {offer.expiresAt && (
+                        <span className="text-gray-600 text-xs">
+                          Expires {new Date(offer.expiresAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
               const isRental = offer.category === 'rental';
               return (
                 <div

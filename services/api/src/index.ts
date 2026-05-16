@@ -13,7 +13,7 @@ import {
   getDeliveriesForSubscription,
   listRecentDeliveries,
 } from './subscriptions.js';
-import { createActiveDriverOffers, getOffersForProfile } from './offers.js';
+import { createActiveDriverOffers, createHighPurchaseIntentOffer, getOffersForProfile } from './offers.js';
 import type { EventInput, SignalInput, WebhookSubscriptionInput } from '@nexus/types';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -289,13 +289,19 @@ app.post('/webhooks/offers', async (req, reply) => {
     firingId: string;
   };
 
-  if (firing.signalName !== 'Active Driver') {
-    return reply.code(200).send({ ok: true, message: 'Signal not handled' });
+  if (firing.signalName === 'Active Driver') {
+    await createActiveDriverOffers(firing.profileId, firing.signalId, firing.firingId);
+    console.log(`[offers] created Active Driver offers for profile ${firing.profileId}`);
+    return reply.code(200).send({ ok: true });
   }
 
-  await createActiveDriverOffers(firing.profileId, firing.signalId, firing.firingId);
-  console.log(`[offers] created Active Driver offers for profile ${firing.profileId}`);
-  return reply.code(200).send({ ok: true });
+  if (firing.signalName === 'High Purchase Intent') {
+    await createHighPurchaseIntentOffer(firing.profileId, firing.signalId, firing.firingId);
+    console.log(`[offers] created High Purchase Intent offer for profile ${firing.profileId}`);
+    return reply.code(200).send({ ok: true });
+  }
+
+  return reply.code(200).send({ ok: true, message: 'Signal not handled' });
 });
 
 app.get('/profiles/:profileId/offers', async (req) => {
