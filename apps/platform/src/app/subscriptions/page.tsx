@@ -18,10 +18,17 @@ interface Subscription {
 
 interface Delivery {
   deliveryId: string;
+  subscriptionId: string;
   statusCode: number | null;
   success: boolean;
   attemptedAt: string;
   responseBody?: string | null;
+}
+
+interface RecentDelivery extends Delivery {
+  targetUrl: string;
+  signalName: string;
+  signalId: string;
 }
 
 export default function SubscriptionsPage() {
@@ -54,6 +61,9 @@ export default function SubscriptionsPage() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [deliveriesLoading, setDeliveriesLoading] = useState(false);
 
+  // Live delivery feed
+  const [recentDeliveries, setRecentDeliveries] = useState<RecentDelivery[]>([]);
+
   async function loadData() {
     try {
       const [subsData, sigData] = await Promise.all([
@@ -71,6 +81,17 @@ export default function SubscriptionsPage() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    function fetchDeliveries() {
+      cdpFetch('/deliveries?limit=50')
+        .then((res) => setRecentDeliveries(res.data ?? []))
+        .catch(() => {});
+    }
+    fetchDeliveries();
+    const interval = setInterval(fetchDeliveries, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   function getSignalName(id: string) {
@@ -425,6 +446,69 @@ export default function SubscriptionsPage() {
           </table>
         </div>
       )}
+
+      {/* Live Delivery Log */}
+      <div className="mt-10 bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-200">Recent Deliveries</h2>
+            <p className="text-xs text-slate-400 mt-1">Live log of all webhook deliveries across every subscription. Refreshes every 5s.</p>
+          </div>
+          <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Live
+          </span>
+        </div>
+        {recentDeliveries.length === 0 ? (
+          <div className="px-5 py-10 text-center text-slate-500 text-sm">
+            No deliveries yet — fire a signal to see webhook deliveries appear here.
+          </div>
+        ) : (
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-700 bg-slate-800/60">
+                <th className="text-left px-4 py-2.5 text-slate-400 font-medium">Time</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 font-medium">Signal</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 font-medium">Endpoint</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 font-medium">Status</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 font-medium">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentDeliveries.map((d) => {
+                const is2xx = d.statusCode != null && d.statusCode >= 200 && d.statusCode < 300;
+                return (
+                  <tr key={d.deliveryId} className="border-b border-slate-700/40 hover:bg-slate-800/40">
+                    <td className="px-4 py-2.5 font-mono text-slate-400 whitespace-nowrap">
+                      {new Date(d.attemptedAt).toLocaleTimeString()}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className="text-amber-400 font-medium">{d.signalName}</span>
+                    </td>
+                    <td className="px-4 py-2.5 font-mono text-slate-400 max-w-[220px] truncate" title={d.targetUrl}>
+                      {d.targetUrl}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className={`font-mono font-semibold ${is2xx ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {d.statusCode ?? '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${
+                        d.success || is2xx
+                          ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800'
+                          : 'bg-red-900/40 text-red-300 border border-red-800'
+                      }`}>
+                        {d.success || is2xx ? '✓ Success' : '✕ Failed'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* Payload Reference */}
       <div className="mt-10 bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">

@@ -11,6 +11,7 @@ import {
   listSubscriptions,
   deleteSubscription,
   getDeliveriesForSubscription,
+  listRecentDeliveries,
 } from './subscriptions.js';
 import { createActiveDriverOffers, getOffersForProfile } from './offers.js';
 import type { EventInput, SignalInput, WebhookSubscriptionInput } from '@nexus/types';
@@ -268,6 +269,12 @@ app.delete('/subscriptions/:subscriptionId', async (req, reply) => {
 app.get('/subscriptions/:subscriptionId/deliveries', async (req) => {
   const { subscriptionId } = req.params as { subscriptionId: string };
   const deliveries = await getDeliveriesForSubscription(subscriptionId);
+  return { ok: true, data: deliveries };
+});
+
+app.get('/deliveries', async (req) => {
+  const { limit } = req.query as { limit?: string };
+  const deliveries = await listRecentDeliveries(Number(limit ?? 100));
   return { ok: true, data: deliveries };
 });
 

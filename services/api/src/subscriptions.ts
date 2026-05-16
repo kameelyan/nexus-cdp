@@ -53,3 +53,29 @@ export async function getDeliveriesForSubscription(subscriptionId: string): Prom
   );
   return r.rows.map(rowToDelivery);
 }
+
+export async function listRecentDeliveries(limit: number): Promise<Record<string, unknown>[]> {
+  const r = await query<Record<string, unknown>>(
+    `SELECT d.delivery_id, d.subscription_id, d.firing_id, d.status_code, d.success,
+            d.attempted_at, d.response_body,
+            s.target_url, sig.name AS signal_name, sig.signal_id
+     FROM webhook_deliveries d
+     JOIN webhook_subscriptions s ON d.subscription_id = s.subscription_id
+     JOIN signals sig ON s.signal_id = sig.signal_id
+     ORDER BY d.attempted_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return r.rows.map((row) => ({
+    deliveryId: row.delivery_id,
+    subscriptionId: row.subscription_id,
+    firingId: row.firing_id,
+    statusCode: row.status_code,
+    success: row.success,
+    attemptedAt: (row.attempted_at as Date).toISOString(),
+    responseBody: row.response_body,
+    targetUrl: row.target_url,
+    signalName: row.signal_name,
+    signalId: row.signal_id,
+  }));
+}

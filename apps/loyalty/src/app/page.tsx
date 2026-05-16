@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<StoredUser | null>(null);
   const [mounted, setMounted] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -66,12 +67,23 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((res) => {
         const profile = res.data?.[0];
-        if (!profile?.profileId) return;
-        return fetch(`${CDP_API}/profiles/${profile.profileId}/offers`).then((r) => r.json());
+        if (profile?.profileId) setProfileId(profile.profileId);
       })
-      .then((res) => { if (res?.data) setOffers(res.data); })
       .catch(() => {});
   }, [user]);
+
+  useEffect(() => {
+    if (!profileId) return;
+    function fetchOffers() {
+      fetch(`${CDP_API}/profiles/${profileId}/offers`)
+        .then((r) => r.json())
+        .then((res) => { if (res?.data) setOffers(res.data); })
+        .catch(() => {});
+    }
+    fetchOffers();
+    const interval = setInterval(fetchOffers, 5000);
+    return () => clearInterval(interval);
+  }, [profileId]);
 
   if (!mounted) return null;
 
