@@ -24,3 +24,4 @@ await client.query(seed);
 console.log('[migrate] seed applied');
 
 await client.end();
+console.log('[migrate] done');
