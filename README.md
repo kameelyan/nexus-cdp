@@ -368,3 +368,56 @@ Instrument any system by POSTing to `/events`. Use `source: 'api'` for server-si
 | Identity | Fingerprint.js Pro |
 | Monorepo | Turborepo + pnpm workspaces |
 | Local infra | Docker Compose |
+
+---
+
+## Deploying to Railway
+
+Railway hosts all services in one project with managed Postgres and Redis.
+
+### 1. Create a Railway project
+
+Go to [railway.app](https://railway.app), create a new project, and add:
+- **PostgreSQL** plugin (auto-injects `DATABASE_URL`)
+- **Redis** plugin (auto-injects `REDIS_URL`)
+
+### 2. Add services (one per row below)
+
+For each service, click **+ New Service → GitHub Repo**, select `nexus-cdp`, and set the **Root Directory** as shown:
+
+| Service name | Root Directory | Notes |
+|---|---|---|
+| `api` | `services/api` | Set `WEBHOOK_SIGNING_SECRET` |
+| `signal-engine` | `services/signal-engine` | Worker — no public URL needed |
+| `webhook-dispatcher` | `services/webhook-dispatcher` | Worker — no public URL needed |
+| `platform` | `apps/platform` | CDP dashboard |
+| `storefront` | `apps/storefront` | Apex Motors storefront |
+| `loyalty` | `apps/loyalty` | Apex Rewards portal |
+| `telemetry-sim` | `apps/telemetry-sim` | Telemetry simulator |
+
+### 3. Set environment variables
+
+**`api`, `signal-engine`, `webhook-dispatcher`** — `DATABASE_URL` and `REDIS_URL` are auto-injected by Railway plugins. Also set:
+```
+WEBHOOK_SIGNING_SECRET=<random 32+ char string>
+```
+
+**All 4 Next.js apps** — set these on each:
+```
+NEXT_PUBLIC_CDP_API_URL=https://<your-api-service>.up.railway.app
+NEXT_PUBLIC_FP_API_KEY=<your Fingerprint.js Pro key>
+```
+
+### 4. Run the database schema
+
+After `api` deploys for the first time, open its Railway shell and run:
+```bash
+psql $DATABASE_URL -f infra/postgres/schema.sql
+psql $DATABASE_URL -f infra/postgres/seed.sql
+```
+
+### 5. Done
+
+Each service gets a `*.up.railway.app` URL. Share the four app URLs with your audience.
+
+> **Tip:** After the schema is loaded, the signal engine and webhook dispatcher will start processing automatically — no manual steps needed.
