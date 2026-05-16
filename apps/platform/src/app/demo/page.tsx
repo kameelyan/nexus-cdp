@@ -9,6 +9,13 @@ interface SignalStats {
   firingCount: number;
 }
 
+const SITES = [
+  { name: 'Apex Motors Storefront', url: 'https://nexus-cdp-storefront-production.up.railway.app/vehicles/VIN-TRAVERSE-004', icon: '🏎️', color: 'indigo' },
+  { name: 'Apex Rewards Portal', url: 'https://nexus-cdp-loyalty-production.up.railway.app/', icon: '⭐', color: 'amber' },
+  { name: 'Telemetry Simulator', url: 'https://nexus-cdp-telemetry-production.up.railway.app/', icon: '📡', color: 'emerald' },
+  { name: 'Nexus CDP Platform', url: 'https://nexus-cdp-platform-production.up.railway.app/demo', icon: '🖥️', color: 'violet' },
+];
+
 const SIGNALS = [
   {
     id: '11111111-0000-0000-0000-000000000001',
@@ -19,6 +26,7 @@ const SIGNALS = [
     expiresIn: '7 days',
     trigger: {
       where: 'Apex Motors Storefront',
+      url: 'https://nexus-cdp-storefront-production.up.railway.app/vehicles/VIN-TRAVERSE-004',
       steps: [
         'Log in to the storefront',
         'Open any vehicle detail page — this fires a vehicle_view event',
@@ -40,6 +48,7 @@ const SIGNALS = [
     expiresIn: '30 days',
     trigger: {
       where: 'Apex Rewards Portal',
+      url: 'https://nexus-cdp-loyalty-production.up.railway.app/',
       steps: [
         'Log in to the loyalty portal',
         'The dashboard fires a points_balance_updated event with points_to_next_tier = 153',
@@ -60,6 +69,7 @@ const SIGNALS = [
     expiresIn: '1 day',
     trigger: {
       where: 'Telemetry Simulator',
+      url: 'https://nexus-cdp-telemetry-production.up.railway.app/',
       steps: [
         'Open the Telemetry Simulator and enter a user ID that matches a logged-in profile',
         'Click "Start Drive" to begin sending location_update events',
@@ -81,6 +91,7 @@ const SIGNALS = [
     expiresIn: '30 days',
     trigger: {
       where: 'Telemetry Simulator + Storefront',
+      url: 'https://nexus-cdp-telemetry-production.up.railway.app/',
       steps: [
         'In the Telemetry Simulator, fire a rental_ended event for the logged-in user',
         'Then visit the Apex Motors Storefront and view at least 2 vehicle detail pages',
@@ -100,6 +111,7 @@ const SIGNALS = [
     expiresIn: 'Today only',
     trigger: {
       where: 'Telemetry Simulator',
+      url: 'https://nexus-cdp-telemetry-production.up.railway.app/',
       steps: [
         'Open the Telemetry Simulator and go to the In-Store / Dealership panel',
         'Enter the user ID of a logged-in profile',
@@ -119,6 +131,7 @@ const SIGNALS = [
     expiresIn: '60 days',
     trigger: {
       where: 'CDP API (direct)',
+      url: 'https://nexus-cdp-api-production.up.railway.app',
       steps: [
         'This signal requires a profile with 2+ historical purchase events and 90+ days of inactivity',
         'For demo purposes, use the API to post 2 purchase events with occurred_at timestamps 91+ days in the past',
@@ -190,6 +203,25 @@ export default function DemoPage() {
         </p>
       </div>
 
+      {/* Live app links */}
+      <div className="grid grid-cols-4 gap-3 mb-8">
+        {SITES.map((site) => (
+          <a
+            key={site.url}
+            href={site.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-xl p-4 flex flex-col gap-2 transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg leading-none">{site.icon}</span>
+              <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors leading-tight">{site.name}</span>
+            </div>
+            <p className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors truncate">{site.url.replace('https://', '')}</p>
+          </a>
+        ))}
+      </div>
+
       {/* Quick summary strip */}
       <div className="grid grid-cols-3 gap-4 mb-10">
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center">
@@ -253,9 +285,20 @@ export default function DemoPage() {
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
                     How to Trigger
                   </p>
-                  <p className="text-xs text-indigo-400 font-medium mb-3">
-                    📍 {signal.trigger.where}
-                  </p>
+                  {signal.trigger.url ? (
+                    <a
+                      href={signal.trigger.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-indigo-400 font-medium mb-3 hover:text-indigo-300 underline underline-offset-2 flex items-center gap-1 w-fit"
+                    >
+                      📍 {signal.trigger.where} ↗
+                    </a>
+                  ) : (
+                    <p className="text-xs text-indigo-400 font-medium mb-3">
+                      📍 {signal.trigger.where}
+                    </p>
+                  )}
                   <ol className="space-y-2">
                     {signal.trigger.steps.map((step, i) => (
                       <li key={i} className="flex gap-3 text-sm text-slate-300">

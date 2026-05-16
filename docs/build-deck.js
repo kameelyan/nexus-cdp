@@ -753,10 +753,10 @@ function footerBar(slide, pageNum) {
   });
 
   const sites = [
-    { label: "A", name: "Apex Motors Storefront", port: "3001", icon: "🏎️", desc: "Browse vehicles — active High Purchase Intent offer shows gold discounted price with struck-through MSRP across all listings", col: C.indigo },
-    { label: "B", name: "Apex Rewards Portal", port: "3002", icon: "⭐", desc: "Personalized offer cards appear in real time as signals fire — 6 signal types, live polling, no refresh needed", col: C.amber },
-    { label: "C", name: "Telemetry Simulator", port: "3003", icon: "📡", desc: "Simulate car GPS drives, dealership check-ins, and rental events — fires signals from the physical world", col: C.green },
-    { label: "D", name: "Nexus CDP Platform", port: "3004", icon: "🖥️", desc: "Profiles, live event stream, signal builder, webhook delivery log, and Demo Guide with step-by-step trigger instructions", col: "8B5CF6" },
+    { label: "A", name: "Apex Motors Storefront", url: "nexus-cdp-storefront-production.up.railway.app", icon: "🏎️", desc: "Browse vehicles — active High Purchase Intent offer shows gold discounted price with struck-through MSRP across all listings", col: C.indigo },
+    { label: "B", name: "Apex Rewards Portal", url: "nexus-cdp-loyalty-production.up.railway.app", icon: "⭐", desc: "Personalized offer cards appear in real time as signals fire — 6 signal types, live polling, no refresh needed", col: C.amber },
+    { label: "C", name: "Telemetry Simulator", url: "nexus-cdp-telemetry-production.up.railway.app", icon: "📡", desc: "Simulate car GPS drives, dealership check-ins, and rental events — fires signals from the physical world", col: C.green },
+    { label: "D", name: "Nexus CDP Platform", url: "nexus-cdp-platform-production.up.railway.app", icon: "🖥️", desc: "Profiles, live event stream, signal builder, webhook delivery log, and Demo Guide with step-by-step trigger instructions", col: "8B5CF6" },
   ];
 
   const positions = [
@@ -791,9 +791,9 @@ function footerBar(slide, pageNum) {
       x: x + 0.65, y: y + 0.2, w: 3.7, h: 0.42,
       fontFace: FONT, fontSize: 13, bold: true, color: C.navy, valign: "middle", margin: 0,
     });
-    s.addText(`localhost:${site.port}`, {
+    s.addText(site.url, {
       x: x + 0.65, y: y + 0.62, w: 3.7, h: 0.28,
-      fontFace: "Consolas", fontSize: 9.5, color: site.col, margin: 0,
+      fontFace: "Consolas", fontSize: 8.5, color: site.col, margin: 0,
     });
     s.addText(site.desc, {
       x: x + 0.15, y: y + 0.95, w: 4.2, h: 0.65,
