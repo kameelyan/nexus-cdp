@@ -119,7 +119,7 @@ export async function syncOffersForProfile(profileId: string): Promise<void> {
      FROM signal_firings sf
      JOIN signals s ON sf.signal_id = s.signal_id
      WHERE sf.profile_id = $1
-       AND sf.fired_at > NOW() - INTERVAL '60 days'
+       AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
        AND NOT EXISTS (
          SELECT 1 FROM profile_offers po WHERE po.firing_id = sf.firing_id
        )`,

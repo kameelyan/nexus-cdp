@@ -10,6 +10,7 @@ function rowsToSignal(
     name: signalRow.name as string,
     description: (signalRow.description as string) ?? '',
     timeWindowSeconds: signalRow.time_window_seconds as number | null,
+    firingExpirySeconds: signalRow.firing_expiry_seconds as number | null,
     createdAt: (signalRow.created_at as Date).toISOString(),
     updatedAt: (signalRow.updated_at as Date).toISOString(),
     rules: ruleRows.map((r) => ({
@@ -106,7 +107,7 @@ export async function deleteSignal(signalId: string): Promise<boolean> {
 
 export async function listRecentFirings(limit = 50) {
   const r = await query<Record<string, unknown>>(
-    `SELECT sf.firing_id, sf.signal_id, sf.profile_id, sf.matched_events, sf.fired_at,
+    `SELECT sf.firing_id, sf.signal_id, sf.profile_id, sf.matched_events, sf.fired_at, sf.expires_at,
             s.name AS signal_name,
             (SELECT user_id FROM profile_user_ids WHERE profile_id = sf.profile_id LIMIT 1) AS user_id,
             (SELECT fingerprint FROM profile_fingerprints WHERE profile_id = sf.profile_id LIMIT 1) AS fingerprint
@@ -116,14 +117,19 @@ export async function listRecentFirings(limit = 50) {
      LIMIT $1`,
     [limit]
   );
-  return r.rows.map((row) => ({
-    firingId: row.firing_id as string,
-    signalId: row.signal_id as string,
-    signalName: row.signal_name as string,
-    profileId: row.profile_id as string,
-    userId: (row.user_id as string) ?? null,
-    fingerprint: (row.fingerprint as string) ?? null,
-    matchedEvents: (row.matched_events as string[]) ?? [],
-    firedAt: (row.fired_at as Date).toISOString(),
-  }));
+  return r.rows.map((row) => {
+    const expiresAt = row.expires_at ? (row.expires_at as Date).toISOString() : null;
+    return {
+      firingId: row.firing_id as string,
+      signalId: row.signal_id as string,
+      signalName: row.signal_name as string,
+      profileId: row.profile_id as string,
+      userId: (row.user_id as string) ?? null,
+      fingerprint: (row.fingerprint as string) ?? null,
+      matchedEvents: (row.matched_events as string[]) ?? [],
+      firedAt: (row.fired_at as Date).toISOString(),
+      expiresAt,
+      active: expiresAt ? new Date(expiresAt) > new Date() : true,
+    };
+  });
 }

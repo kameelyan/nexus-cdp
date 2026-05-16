@@ -118,6 +118,7 @@ async function processEvent(event: CdpEvent): Promise<void> {
     name: s.name as string,
     description: (s.description as string) ?? '',
     timeWindowSeconds: s.time_window_seconds as number | null,
+    firingExpirySeconds: s.firing_expiry_seconds as number | null,
     createdAt: (s.created_at as Date).toISOString(),
     updatedAt: (s.updated_at as Date).toISOString(),
     rules: rulesResult.rows
@@ -138,12 +139,15 @@ async function processEvent(event: CdpEvent): Promise<void> {
     if (!matched) continue;
 
     const firingId = uuidv4();
+    const expiresAt = signal.firingExpirySeconds
+      ? new Date(Date.now() + signal.firingExpirySeconds * 1000).toISOString()
+      : null;
 
     // Persist firing
     await db.query(
-      `INSERT INTO signal_firings (firing_id, signal_id, profile_id, matched_events, fired_at)
-       VALUES ($1, $2, $3, $4, NOW())`,
-      [firingId, signal.signalId, event.profileId, eventIds]
+      `INSERT INTO signal_firings (firing_id, signal_id, profile_id, matched_events, fired_at, expires_at)
+       VALUES ($1, $2, $3, $4, NOW(), $5)`,
+      [firingId, signal.signalId, event.profileId, eventIds, expiresAt]
     );
 
     // Get profile identifiers for the firing payload

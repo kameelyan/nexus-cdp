@@ -14,6 +14,8 @@ interface SignalFiring {
   userId?: string;
   fingerprint?: string;
   matchedEvents?: unknown[];
+  expiresAt?: string | null;
+  active?: boolean;
   raw: string;
 }
 
@@ -51,6 +53,8 @@ export default function SignalStreamPage() {
             userId: f.userId as string | undefined,
             fingerprint: f.fingerprint as string | undefined,
             matchedEvents: f.matchedEvents as unknown[],
+            expiresAt: f.expiresAt as string | null,
+            active: f.active as boolean,
             raw: JSON.stringify(f),
           })
         );
@@ -212,10 +216,13 @@ export default function SignalStreamPage() {
                   }`}
                 >
                   <span className="text-slate-600 flex-shrink-0 tabular-nums">{formatTs(f.timestamp)}</span>
-                  <span className="text-amber-400">🔔</span>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 ${f.active === false ? 'bg-slate-600' : 'bg-emerald-500'}`} />
                   <span className="text-amber-300 font-semibold">"{f.signalName}"</span>
-                  <span className="text-slate-500">fired for profile</span>
+                  <span className="text-slate-500">→</span>
                   <span className="text-slate-300">{f.profileId ? f.profileId.slice(0, 16) : '—'}</span>
+                  {f.active === false && (
+                    <span className="text-slate-600 text-[10px] ml-auto flex-shrink-0">expired</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -264,6 +271,26 @@ export default function SignalStreamPage() {
               <p className="text-xs text-slate-300">
                 {new Date(selectedFiring.timestamp).toLocaleString()}
               </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Status</p>
+              {selectedFiring.active === false ? (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 border border-slate-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                  Expired
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-300 border border-emerald-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Active
+                </span>
+              )}
+              {selectedFiring.expiresAt && (
+                <p className="text-xs text-slate-500 mt-1.5">
+                  Expires {new Date(selectedFiring.expiresAt).toLocaleString()}
+                </p>
+              )}
             </div>
 
             {selectedFiring.matchedEvents && (

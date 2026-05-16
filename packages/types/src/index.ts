@@ -123,6 +123,7 @@ export interface Signal {
   name: string;
   description: string;
   timeWindowSeconds: number | null;
+  firingExpirySeconds: number | null;
   rules: SignalRule[];
   createdAt: string;
   updatedAt: string;
@@ -151,6 +152,8 @@ export interface SignalFiring {
   userId: string | null;
   matchedEvents: string[];
   firedAt: string;
+  expiresAt: string | null;
+  active: boolean;
 }
 
 // ----------------------------------------------------------------

@@ -69,13 +69,16 @@ CREATE INDEX IF NOT EXISTS idx_events_source_app   ON events(source_app);
 -- Signals
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS signals (
-  signal_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name                TEXT NOT NULL UNIQUE,
-  description         TEXT NOT NULL DEFAULT '',
-  time_window_seconds INTEGER,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  signal_id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                  TEXT NOT NULL UNIQUE,
+  description           TEXT NOT NULL DEFAULT '',
+  time_window_seconds   INTEGER,
+  firing_expiry_seconds INTEGER,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE signals ADD COLUMN IF NOT EXISTS firing_expiry_seconds INTEGER;
 
 CREATE TABLE IF NOT EXISTS signal_rules (
   rule_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -97,12 +100,16 @@ CREATE TABLE IF NOT EXISTS signal_firings (
   signal_id      UUID NOT NULL REFERENCES signals(signal_id) ON DELETE CASCADE,
   profile_id     UUID NOT NULL REFERENCES profiles(profile_id) ON DELETE CASCADE,
   matched_events UUID[] NOT NULL DEFAULT '{}',
-  fired_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  fired_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at     TIMESTAMPTZ
 );
+
+ALTER TABLE signal_firings ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_signal_firings_signal_id   ON signal_firings(signal_id);
 CREATE INDEX IF NOT EXISTS idx_signal_firings_profile_id  ON signal_firings(profile_id);
 CREATE INDEX IF NOT EXISTS idx_signal_firings_fired_at    ON signal_firings(fired_at DESC);
+CREATE INDEX IF NOT EXISTS idx_signal_firings_expires_at  ON signal_firings(expires_at);
 
 -- ----------------------------------------------------------------
 -- Webhook Subscriptions
