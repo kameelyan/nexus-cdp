@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ----------------------------------------------------------------
 -- Profiles — one row per unified customer identity
 -- ----------------------------------------------------------------
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   profile_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   traits        JSONB NOT NULL DEFAULT '{}',
   segments      TEXT[] NOT NULL DEFAULT '{}',
@@ -21,19 +21,19 @@ CREATE TABLE profiles (
 -- ----------------------------------------------------------------
 -- Identity resolution tables — multiple identifiers → one profile
 -- ----------------------------------------------------------------
-CREATE TABLE profile_fingerprints (
+CREATE TABLE IF NOT EXISTS profile_fingerprints (
   fingerprint  TEXT PRIMARY KEY,
   profile_id   UUID NOT NULL REFERENCES profiles(profile_id) ON DELETE CASCADE,
   linked_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE profile_user_ids (
+CREATE TABLE IF NOT EXISTS profile_user_ids (
   user_id      TEXT PRIMARY KEY,
   profile_id   UUID NOT NULL REFERENCES profiles(profile_id) ON DELETE CASCADE,
   linked_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE profile_device_ids (
+CREATE TABLE IF NOT EXISTS profile_device_ids (
   device_id    TEXT PRIMARY KEY,
   profile_id   UUID NOT NULL REFERENCES profiles(profile_id) ON DELETE CASCADE,
   linked_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -42,7 +42,7 @@ CREATE TABLE profile_device_ids (
 -- ----------------------------------------------------------------
 -- Events
 -- ----------------------------------------------------------------
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
   event_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id   UUID REFERENCES profiles(profile_id) ON DELETE SET NULL,
   fingerprint  TEXT,
@@ -57,39 +57,39 @@ CREATE TABLE events (
   ingested_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_events_profile_id   ON events(profile_id);
-CREATE INDEX idx_events_fingerprint  ON events(fingerprint);
-CREATE INDEX idx_events_user_id      ON events(user_id);
-CREATE INDEX idx_events_device_id    ON events(device_id);
-CREATE INDEX idx_events_type         ON events(type);
-CREATE INDEX idx_events_occurred_at  ON events(occurred_at DESC);
-CREATE INDEX idx_events_source_app   ON events(source_app);
+CREATE INDEX IF NOT EXISTS idx_events_profile_id   ON events(profile_id);
+CREATE INDEX IF NOT EXISTS idx_events_fingerprint  ON events(fingerprint);
+CREATE INDEX IF NOT EXISTS idx_events_user_id      ON events(user_id);
+CREATE INDEX IF NOT EXISTS idx_events_device_id    ON events(device_id);
+CREATE INDEX IF NOT EXISTS idx_events_type         ON events(type);
+CREATE INDEX IF NOT EXISTS idx_events_occurred_at  ON events(occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_source_app   ON events(source_app);
 
 -- ----------------------------------------------------------------
 -- Signals
 -- ----------------------------------------------------------------
-CREATE TABLE signals (
+CREATE TABLE IF NOT EXISTS signals (
   signal_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name                TEXT NOT NULL UNIQUE,
   description         TEXT NOT NULL DEFAULT '',
-  time_window_seconds INTEGER,          -- NULL = no time constraint
+  time_window_seconds INTEGER,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE signal_rules (
+CREATE TABLE IF NOT EXISTS signal_rules (
   rule_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   signal_id   UUID NOT NULL REFERENCES signals(signal_id) ON DELETE CASCADE,
   event_type  TEXT NOT NULL,
   min_count   INTEGER NOT NULL DEFAULT 1,
-  conditions  JSONB NOT NULL DEFAULT '{}',  -- property filters
+  conditions  JSONB NOT NULL DEFAULT '{}',
   sort_order  INTEGER NOT NULL DEFAULT 0
 );
 
 -- ----------------------------------------------------------------
 -- Signal Firings — audit log of every time a signal fired
 -- ----------------------------------------------------------------
-CREATE TABLE signal_firings (
+CREATE TABLE IF NOT EXISTS signal_firings (
   firing_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   signal_id      UUID NOT NULL REFERENCES signals(signal_id) ON DELETE CASCADE,
   profile_id     UUID NOT NULL REFERENCES profiles(profile_id) ON DELETE CASCADE,
@@ -97,14 +97,14 @@ CREATE TABLE signal_firings (
   fired_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_signal_firings_signal_id   ON signal_firings(signal_id);
-CREATE INDEX idx_signal_firings_profile_id  ON signal_firings(profile_id);
-CREATE INDEX idx_signal_firings_fired_at    ON signal_firings(fired_at DESC);
+CREATE INDEX IF NOT EXISTS idx_signal_firings_signal_id   ON signal_firings(signal_id);
+CREATE INDEX IF NOT EXISTS idx_signal_firings_profile_id  ON signal_firings(profile_id);
+CREATE INDEX IF NOT EXISTS idx_signal_firings_fired_at    ON signal_firings(fired_at DESC);
 
 -- ----------------------------------------------------------------
 -- Webhook Subscriptions
 -- ----------------------------------------------------------------
-CREATE TABLE webhook_subscriptions (
+CREATE TABLE IF NOT EXISTS webhook_subscriptions (
   subscription_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   signal_id        UUID NOT NULL REFERENCES signals(signal_id) ON DELETE CASCADE,
   target_url       TEXT NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE webhook_subscriptions (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE webhook_deliveries (
+CREATE TABLE IF NOT EXISTS webhook_deliveries (
   delivery_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   subscription_id  UUID NOT NULL REFERENCES webhook_subscriptions(subscription_id) ON DELETE CASCADE,
   firing_id        UUID NOT NULL REFERENCES signal_firings(firing_id) ON DELETE CASCADE,
@@ -122,4 +122,4 @@ CREATE TABLE webhook_deliveries (
   response_body    TEXT
 );
 
-CREATE INDEX idx_webhook_deliveries_sub_id ON webhook_deliveries(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_sub_id ON webhook_deliveries(subscription_id);
