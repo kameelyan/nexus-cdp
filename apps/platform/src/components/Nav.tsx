@@ -12,6 +12,7 @@ const links = [
   { href: '/signals', label: 'Signals', icon: '🔔' },
   { href: '/signal-stream', label: 'Signal Stream', icon: '📡' },
   { href: '/subscriptions', label: 'Webhooks', icon: '🔗' },
+  { href: '/release-notes', label: 'Release Notes', icon: '📋' },
 ];
 
 export default function Nav() {
