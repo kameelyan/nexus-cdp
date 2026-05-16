@@ -83,7 +83,8 @@ CREATE TABLE IF NOT EXISTS signal_rules (
   event_type  TEXT NOT NULL,
   min_count   INTEGER NOT NULL DEFAULT 1,
   conditions  JSONB NOT NULL DEFAULT '{}',
-  sort_order  INTEGER NOT NULL DEFAULT 0
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (signal_id, sort_order)
 );
 
 -- ----------------------------------------------------------------

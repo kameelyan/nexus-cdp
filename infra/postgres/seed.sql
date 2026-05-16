@@ -44,25 +44,31 @@ ON CONFLICT DO NOTHING;
 -- Signal rules for "High Purchase Intent"
 INSERT INTO signal_rules (signal_id, event_type, min_count, conditions, sort_order) VALUES
   ('11111111-0000-0000-0000-000000000001', 'vehicle_view', 3, '{}', 0),
-  ('11111111-0000-0000-0000-000000000001', 'service_price_check', 1, '{}', 1);
+  ('11111111-0000-0000-0000-000000000001', 'service_price_check', 1, '{}', 1)
+ON CONFLICT (signal_id, sort_order) DO NOTHING;
 
 -- Signal rules for "Loyalty Milestone Approaching"
 INSERT INTO signal_rules (signal_id, event_type, min_count, conditions, sort_order) VALUES
-  ('11111111-0000-0000-0000-000000000002', 'points_balance_updated', 1, '{"points_to_next_tier": {"$lt": 500}}', 0);
+  ('11111111-0000-0000-0000-000000000002', 'points_balance_updated', 1, '{"points_to_next_tier": {"$lt": 500}}', 0)
+ON CONFLICT (signal_id, sort_order) DO NOTHING;
 
 -- Signal rules for "Active Driver"
 INSERT INTO signal_rules (signal_id, event_type, min_count, conditions, sort_order) VALUES
-  ('11111111-0000-0000-0000-000000000003', 'location_update', 10, '{}', 0);
+  ('11111111-0000-0000-0000-000000000003', 'location_update', 10, '{}', 0)
+ON CONFLICT (signal_id, sort_order) DO NOTHING;
 
 -- Signal rules for "Recent Renter Browsing"
 INSERT INTO signal_rules (signal_id, event_type, min_count, conditions, sort_order) VALUES
   ('11111111-0000-0000-0000-000000000004', 'rental_ended', 1, '{}', 0),
-  ('11111111-0000-0000-0000-000000000004', 'vehicle_view', 2, '{}', 1);
+  ('11111111-0000-0000-0000-000000000004', 'vehicle_view', 2, '{}', 1)
+ON CONFLICT (signal_id, sort_order) DO NOTHING;
 
 -- Signal rules for "Dealership Walk-In"
 INSERT INTO signal_rules (signal_id, event_type, min_count, conditions, sort_order) VALUES
-  ('11111111-0000-0000-0000-000000000005', 'store_checkin', 1, '{}', 0);
+  ('11111111-0000-0000-0000-000000000005', 'store_checkin', 1, '{}', 0)
+ON CONFLICT (signal_id, sort_order) DO NOTHING;
 
 -- Signal rules for "Lapsed High-Value Customer"
 INSERT INTO signal_rules (signal_id, event_type, min_count, conditions, sort_order) VALUES
-  ('11111111-0000-0000-0000-000000000006', 'purchase', 2, '{}', 0);
+  ('11111111-0000-0000-0000-000000000006', 'purchase', 2, '{}', 0)
+ON CONFLICT (signal_id, sort_order) DO NOTHING;
