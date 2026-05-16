@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { trackEvent } from '@/lib/sdk';
 import { getVehicleByVin, formatPrice } from '@/lib/vehicles';
+import { useDiscountOffer } from '@/lib/useDiscountOffer';
 
 export default function VehicleDetailPage() {
   const params = useParams();
@@ -13,6 +14,7 @@ export default function VehicleDetailPage() {
 
   const [wishlistAdded, setWishlistAdded] = useState(false);
   const [quoteRequested, setQuoteRequested] = useState(false);
+  const { discountActive, discountPct, applyDiscount } = useDiscountOffer();
 
   useEffect(() => {
     if (vehicle) {
@@ -127,10 +129,28 @@ export default function VehicleDetailPage() {
               {vehicle.category} · {vehicle.vin}
             </p>
             <h1 className="text-5xl font-black tracking-tight text-white mb-4">{vehicle.name}</h1>
-            <p className="text-3xl font-bold text-[#c8a96e] mb-8">
-              {formatPrice(vehicle.price)}
-              <span className="text-sm text-gray-500 font-normal ml-2">Starting MSRP</span>
-            </p>
+            <div className="mb-8">
+              {discountActive ? (
+                <>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold text-[#c8a96e]">
+                      {formatPrice(applyDiscount(vehicle.price))}
+                    </span>
+                    <span className="text-lg text-gray-600 line-through">
+                      {formatPrice(vehicle.price)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#c8a96e]/70 mt-1 uppercase tracking-widest font-semibold">
+                    {discountPct}% Apex Rewards member discount applied
+                  </p>
+                </>
+              ) : (
+                <p className="text-3xl font-bold text-[#c8a96e]">
+                  {formatPrice(vehicle.price)}
+                  <span className="text-sm text-gray-500 font-normal ml-2">Starting MSRP</span>
+                </p>
+              )}
+            </div>
 
             <p className="text-gray-300 leading-relaxed mb-8">{vehicle.description}</p>
 

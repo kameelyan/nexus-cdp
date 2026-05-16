@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { trackEvent } from '@/lib/sdk';
 import { VEHICLES, formatPrice, type Vehicle } from '@/lib/vehicles';
+import { useDiscountOffer } from '@/lib/useDiscountOffer';
 
 type Category = 'All' | Vehicle['category'];
 
@@ -11,6 +12,7 @@ const CATEGORIES: Category[] = ['All', 'SUV', 'Sedan', 'Coupe', 'Off-Road', 'Ele
 
 export default function VehiclesPage() {
   const [activeCategory, setActiveCategory] = useState<Category>('All');
+  const { discountActive, discountPct, applyDiscount } = useDiscountOffer();
 
   useEffect(() => {
     trackEvent('vehicle_list_view', { page: 'vehicles' });
@@ -55,6 +57,16 @@ export default function VehiclesPage() {
           ))}
         </div>
 
+        {/* Member discount banner */}
+        {discountActive && (
+          <div className="mb-8 flex items-center gap-3 border border-[#c8a96e]/30 bg-[#c8a96e]/5 px-5 py-3">
+            <span className="text-[#c8a96e] text-lg">🏷️</span>
+            <p className="text-sm text-[#c8a96e] font-semibold">
+              Your {discountPct}% Apex Rewards member discount is applied to all prices below.
+            </p>
+          </div>
+        )}
+
         {/* Vehicle Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filtered.map((vehicle) => (
@@ -96,9 +108,22 @@ export default function VehiclesPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-800">
-                  <span className="text-2xl font-bold text-white">
-                    {formatPrice(vehicle.price)}
-                  </span>
+                  <div>
+                    {discountActive ? (
+                      <>
+                        <span className="text-2xl font-bold text-[#c8a96e]">
+                          {formatPrice(applyDiscount(vehicle.price))}
+                        </span>
+                        <span className="block text-sm text-gray-600 line-through leading-none mt-0.5">
+                          {formatPrice(vehicle.price)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-2xl font-bold text-white">
+                        {formatPrice(vehicle.price)}
+                      </span>
+                    )}
+                  </div>
                   <Link
                     href={`/vehicles/${vehicle.vin}`}
                     className="text-xs font-bold uppercase tracking-widest text-[#c8a96e] border border-[#c8a96e]/40 px-4 py-2 hover:bg-[#c8a96e] hover:text-gray-950 transition-all duration-200"
