@@ -12,7 +12,9 @@ import {
   deleteSubscription,
   getDeliveriesForSubscription,
 } from './subscriptions.js';
+import { createActiveDriverOffers, getOffersForProfile } from './offers.js';
 import type { EventInput, SignalInput, WebhookSubscriptionInput } from '@nexus/types';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -267,6 +269,44 @@ app.get('/subscriptions/:subscriptionId/deliveries', async (req) => {
   const { subscriptionId } = req.params as { subscriptionId: string };
   const deliveries = await getDeliveriesForSubscription(subscriptionId);
   return { ok: true, data: deliveries };
+});
+
+// ----------------------------------------------------------------
+// Webhook Receiver — Offer generation
+// ----------------------------------------------------------------
+app.post('/webhooks/offers', async (req, reply) => {
+  const secret = process.env.WEBHOOK_SIGNING_SECRET ?? '';
+  const signature = (req.headers['x-nexus-signature'] as string) ?? '';
+  const payload = JSON.stringify(req.body);
+  const expected = `sha256=${createHmac('sha256', secret).update(payload).digest('hex')}`;
+
+  let valid = false;
+  try {
+    valid = timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  } catch { valid = false; }
+
+  if (!valid) return reply.code(401).send({ ok: false, error: 'Invalid signature' });
+
+  const firing = req.body as {
+    signalName: string;
+    signalId: string;
+    profileId: string;
+    firingId: string;
+  };
+
+  if (firing.signalName !== 'Active Driver') {
+    return reply.code(200).send({ ok: true, message: 'Signal not handled' });
+  }
+
+  await createActiveDriverOffers(firing.profileId, firing.signalId, firing.firingId);
+  console.log(`[offers] created Active Driver offers for profile ${firing.profileId}`);
+  return reply.code(200).send({ ok: true });
+});
+
+app.get('/profiles/:profileId/offers', async (req) => {
+  const { profileId } = req.params as { profileId: string };
+  const offers = await getOffersForProfile(profileId);
+  return { ok: true, data: offers };
 });
 
 // ----------------------------------------------------------------

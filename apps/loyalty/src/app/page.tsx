@@ -3,6 +3,17 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { trackEvent } from '@/lib/sdk';
 
+const CDP_API = process.env.NEXT_PUBLIC_CDP_API_URL ?? 'http://localhost:4000';
+
+interface Offer {
+  offerId: string;
+  title: string;
+  description: string;
+  cta: string;
+  category: string;
+  expiresAt: string | null;
+}
+
 interface StoredUser {
   userId: string;
   email: string;
@@ -25,6 +36,7 @@ const recentActivity = [
 export default function DashboardPage() {
   const [user, setUser] = useState<StoredUser | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -47,6 +59,19 @@ export default function DashboardPage() {
       pointsToNextTier: POINTS_TO_NEXT,
     });
   }, [mounted]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${CDP_API}/profiles?q=${encodeURIComponent(user.userId)}`)
+      .then((r) => r.json())
+      .then((res) => {
+        const profile = res.data?.[0];
+        if (!profile?.profileId) return;
+        return fetch(`${CDP_API}/profiles/${profile.profileId}/offers`).then((r) => r.json());
+      })
+      .then((res) => { if (res?.data) setOffers(res.data); })
+      .catch(() => {});
+  }, [user]);
 
   if (!mounted) return null;
 
@@ -183,6 +208,70 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Exclusive Offers */}
+      {offers.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-white font-bold text-lg">Your Exclusive Offers</h2>
+            <span className="bg-[#e94560]/20 border border-[#e94560]/40 text-[#e94560] text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+              {offers.length} Active
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {offers.map((offer) => {
+              const isRental = offer.category === 'rental';
+              return (
+                <div
+                  key={offer.offerId}
+                  className={`relative rounded-2xl p-6 border overflow-hidden ${
+                    isRental
+                      ? 'bg-gradient-to-br from-[#1a1a2e] to-[#1f2b1a] border-[#f5c518]/20'
+                      : 'bg-gradient-to-br from-[#1a1a2e] to-[#2b1a1a] border-[#e94560]/20'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-2xl">{isRental ? '🚗' : '🔧'}</span>
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${
+                        isRental
+                          ? 'bg-[#f5c518]/10 border border-[#f5c518]/30 text-[#f5c518]'
+                          : 'bg-[#e94560]/10 border border-[#e94560]/30 text-[#e94560]'
+                      }`}
+                    >
+                      Active Driver Reward
+                    </span>
+                  </div>
+
+                  <h3 className="text-white font-bold text-base mb-2 leading-snug">
+                    {offer.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-5">
+                    {offer.description}
+                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      className={`text-sm font-bold px-4 py-2 rounded-xl transition-colors ${
+                        isRental
+                          ? 'bg-[#f5c518] hover:bg-yellow-400 text-black'
+                          : 'bg-[#e94560] hover:bg-red-500 text-white'
+                      }`}
+                    >
+                      {offer.cta}
+                    </button>
+                    {offer.expiresAt && (
+                      <span className="text-gray-600 text-xs">
+                        Expires {new Date(offer.expiresAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6">
