@@ -39,8 +39,14 @@ for (const signalId of SIGNAL_IDS) {
   await client.query(
     `INSERT INTO webhook_subscriptions (signal_id, target_url, secret)
      VALUES ($1, $2, $3)
-     ON CONFLICT (signal_id, target_url) DO NOTHING`,
+     ON CONFLICT (signal_id, target_url) DO UPDATE SET secret = EXCLUDED.secret`,
     [signalId, offersUrl, secret]
+  );
+  // Remove stale subscriptions for this signal pointing at a different URL
+  await client.query(
+    `DELETE FROM webhook_subscriptions
+     WHERE signal_id = $1 AND target_url != $2`,
+    [signalId, offersUrl]
   );
 }
 console.log(`[migrate] webhook subscriptions seeded → ${offersUrl}`);
