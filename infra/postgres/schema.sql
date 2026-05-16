@@ -161,6 +161,17 @@ ALTER TABLE profile_offers ADD COLUMN IF NOT EXISTS fire_count INTEGER NOT NULL 
 CREATE INDEX IF NOT EXISTS idx_profile_offers_profile_id ON profile_offers(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profile_offers_expires_at ON profile_offers(expires_at);
 
+-- Remove duplicate active offers, keeping the one with the highest fire_count
+DELETE FROM profile_offers
+WHERE claimed_at IS NULL
+  AND signal_id IS NOT NULL
+  AND offer_id NOT IN (
+    SELECT DISTINCT ON (profile_id, signal_id, category) offer_id
+    FROM profile_offers
+    WHERE claimed_at IS NULL AND signal_id IS NOT NULL
+    ORDER BY profile_id, signal_id, category, fire_count DESC, created_at DESC
+  );
+
 -- One active (unclaimed) offer per profile+signal+category
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profile_offers_active_unique
   ON profile_offers (profile_id, signal_id, category)
