@@ -24,9 +24,9 @@ Despite coming from four completely different systems, **Nexus CDP recognizes al
 | Site | Port | Description |
 |------|------|-------------|
 | **Apex Motors Storefront** | 3001 | Vehicle browsing, accessories, service scheduling |
-| **Apex Rewards Portal** | 3002 | Loyalty points, tiers, redemptions, referrals |
+| **Apex Rewards Portal** | 3002 | Loyalty points, tiers, redemptions, personalized offers |
 | **Telemetry Simulator** | 3003 | Simulates car GPS, dealership visits, rental events |
-| **Nexus CDP Platform** | 3004 | Admin dashboard — profiles, events, signals, webhooks |
+| **Nexus CDP Platform** | 3004 | Admin dashboard — profiles, events, signals, webhooks, demo guide |
 | **CDP API** | 4000 | REST API + SSE streams (internal) |
 
 ---
@@ -51,15 +51,16 @@ Despite coming from four completely different systems, **Nexus CDP recognizes al
 │  POST /events ──► Identity Resolution ──► Profile Upsert       │
 │  GET  /profiles/:id   GET /events/stream (SSE)                  │
 │  POST /signals        GET /signals/stream/all (SSE)             │
-│  POST /subscriptions                                            │
+│  POST /subscriptions  GET /profiles/:id/offers                  │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
-              ┌─────────────▼─────────────┐
-              │        PostgreSQL          │
-              │  profiles, events,         │
-              │  signals, signal_firings,  │
-              │  webhook_subscriptions     │
-              └─────────────┬─────────────┘
+              ┌─────────────▼──────────────┐
+              │         PostgreSQL          │
+              │  profiles, events,          │
+              │  signals, signal_firings,   │
+              │  profile_offers,            │
+              │  webhook_subscriptions      │
+              └─────────────┬──────────────┘
                             │
               ┌─────────────▼─────────────┐
               │      Redis Streams         │
@@ -67,12 +68,12 @@ Despite coming from four completely different systems, **Nexus CDP recognizes al
               │  nexus:signals             │
               └──────┬─────────────┬───────┘
                      │             │
-          ┌──────────▼──┐    ┌─────▼──────────────┐
-          │Signal Engine│    │Webhook  Dispatcher  │
-          │(evaluates   │    │(HMAC-signed HTTP    │
-          │ signal rules│    │ POST to subscribers)│
-          │ per event)  │    └────────────────────┘
-          └─────────────┘
+          ┌──────────▼──┐    ┌─────▼──────────────────────┐
+          │Signal Engine│    │ Webhook Dispatcher           │
+          │(evaluates   │    │ (HMAC-signed HTTP POST)      │
+          │ signal rules│    │ → Offer Engine               │
+          │ per event)  │    │   (creates profile_offers)   │
+          └─────────────┘    └──────────────────────────────┘
 ```
 
 ### Identity Resolution
@@ -133,20 +134,20 @@ Every event — whether from a browser, an IoT device, a POS terminal, or a dire
 
 ## Signals
 
-A **signal** is a named condition defined by one or more event rules. When all rules are satisfied for a given profile (optionally within a time window), the signal fires.
+A **signal** is a named condition defined by one or more event rules. When all rules are satisfied for a given profile (optionally within a time window), the signal fires and an expiry timestamp is recorded.
 
 Signals represent **moments that matter** in the customer journey — opportunities to engage, assist, or delight — not just opportunities to sell.
 
 ### Pre-seeded Signals
 
-| Signal | Trigger |
-|--------|---------|
-| **High Purchase Intent** | `vehicle_view` ≥3 + `service_price_check` ≥1 within 7 days |
-| **Loyalty Milestone Approaching** | `points_balance_updated` with `points_to_next_tier < 500` |
-| **Active Driver** | `location_update` ≥10 within 24 hours |
-| **Recent Renter Browsing** | `rental_ended` within 30 days + `vehicle_view` ≥2 |
-| **Dealership Walk-In** | `store_checkin` fired |
-| **Lapsed High-Value Customer** | `purchase` ≥2 historically + no events in 90 days |
+| Signal | Trigger | Expiry |
+|--------|---------|--------|
+| **High Purchase Intent** | `vehicle_view` ≥3 + `service_price_check` ≥1 within 7 days | 7 days |
+| **Loyalty Milestone Approaching** | `points_balance_updated` with `points_to_next_tier < 500` | 30 days |
+| **Active Driver** | `location_update` ≥10 within 24 hours | 1 day |
+| **Recent Renter Browsing** | `rental_ended` within 30 days + `vehicle_view` ≥2 | 30 days |
+| **Dealership Walk-In** | `store_checkin` fired | End of day |
+| **Lapsed High-Value Customer** | `purchase` ≥2 historically + no events in 90 days | 60 days |
 
 ### Signal Rule Conditions
 
@@ -159,6 +160,34 @@ Conditions are JSON property filters on `event.properties`:
 ```
 
 Supported operators: `$eq`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`, `$in`
+
+---
+
+## Offer Engine
+
+When a signal fires, the **Offer Engine** automatically creates a personalized offer in the customer's profile. Offers are visible in real time on the **Apex Rewards Portal** and, where relevant, directly on the **Storefront**.
+
+### Offer Delivery: Push + Pull
+
+Offers are delivered reliably via a **dual-path model**:
+
+- **Push (webhooks)**: The Webhook Dispatcher calls the Offer Engine API on every signal firing. All 6 signal subscriptions are auto-seeded on deploy via `WEBHOOK_OFFERS_URL`.
+- **Pull (sync)**: Every time the Loyalty Portal polls for offers (every 5 seconds), it calls `syncOffersForProfile()` — which checks all active signal firings and creates any missing offers. This self-heals missed webhooks automatically.
+
+### Offer per Signal
+
+| Signal | Offer Shown | Surface |
+|--------|-------------|---------|
+| **High Purchase Intent** | 5% member discount on all vehicles | Loyalty Portal + Storefront (gold price, struck-through MSRP) |
+| **Loyalty Milestone Approaching** | Double Points Weekend — book service this week for 2× points | Loyalty Portal |
+| **Active Driver** | 3× Points on Your Next Rental + 500 Bonus Points on Next Service | Loyalty Portal (two cards) |
+| **Recent Renter Browsing** | $500 trade-in credit toward any new Apex vehicle | Loyalty Portal |
+| **Dealership Walk-In** | In-Store Exclusive — free appraisal + $250 accessories credit (today only) | Loyalty Portal (pulsing amber badge) |
+| **Lapsed High-Value Customer** | Welcome Back — 1,000 Points, On Us | Loyalty Portal |
+
+### Offer Deduplication
+
+Only **one active offer per profile per signal per category** is maintained at a time. If the same signal fires again while an offer is still active, a `fire_count` counter increments (shown as a `×N signals` badge in the portal) and the expiry is refreshed — no duplicate cards are created.
 
 ---
 
@@ -210,6 +239,8 @@ const expected = crypto
 const isValid = `sha256=${expected}` === req.headers['x-nexus-signature'];
 ```
 
+The **Webhook Delivery Log** in the CDP Platform (localhost:3004/subscriptions) shows every delivery attempt with HTTP status and success/failure in real time.
+
 ---
 
 ## Quickstart
@@ -235,7 +266,7 @@ pnpm install
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-This starts Postgres (port 5432) and Redis (port 6379). The schema and demo signal seed data are applied automatically.
+This starts Postgres (port 5432) and Redis (port 6379). The schema, signal seed data, and webhook subscriptions are applied automatically when the API starts.
 
 ### 3. Start everything
 
@@ -274,6 +305,10 @@ The demo works without a key (events are still tracked; identity linking via use
 | `DATABASE_URL` | `postgres://nexus:nexus@localhost:5432/nexus_cdp` | PostgreSQL connection string |
 | `REDIS_URL` | `redis://localhost:6379` | Redis connection URL |
 | `PORT` | `4000` | CDP API listen port |
+| `WEBHOOK_SIGNING_SECRET` | — | Secret used for HMAC-SHA256 webhook signatures |
+| `WEBHOOK_OFFERS_URL` | `http://localhost:4000/webhooks/offers` | Target URL for auto-seeded offer engine webhook subscriptions |
+
+> `WEBHOOK_OFFERS_URL` should point to the API's `/webhooks/offers` endpoint. In Railway, set this to `https://<your-api>.up.railway.app/webhooks/offers`. The API automatically deletes stale subscriptions and upserts the correct URL on every deploy.
 
 ---
 
@@ -281,25 +316,58 @@ The demo works without a key (events are still tracked; identity linking via use
 
 ### Demonstrating Cross-Domain Identity
 
-1. Open the **Storefront** (localhost:3001) and browse several vehicles — note the profile being built in the CDP Platform (localhost:3004 → Profile Explorer, search by fingerprint)
+1. Open the **Storefront** (localhost:3001) and browse several vehicles
 2. Click "Login" on the storefront, use email `demo@apexmotors.com`
 3. Open the **Loyalty Portal** (localhost:3002) and login with the **same email**
-4. Watch the CDP Platform: both the storefront fingerprint and loyalty fingerprint are now merged into a single profile
+4. Watch the **CDP Platform** (localhost:3004 → Profile Explorer): the storefront and loyalty fingerprints merge into a single profile
 
-### Triggering the "High Purchase Intent" Signal
+### High Purchase Intent → 5% Vehicle Discount
 
-1. On the storefront, view any vehicle 3+ times (navigate away and back)
+1. On the storefront, view any vehicle **3+ times** (navigate away and back)
 2. Click "Check Service Pricing" on any vehicle detail page
-3. Within seconds, the Nexus CDP Platform → Signal Stream shows the signal firing
-4. Any registered webhook subscriber receives the signed HTTP POST
+3. Within seconds, the Signal Stream shows the firing — and an indigo offer card appears in the Loyalty Portal
+4. Reload the Storefront vehicle listing: all prices now show a **gold discounted price** with the original MSRP struck through and a discount banner at the top
 
-### Demonstrating Physical Events
+### Loyalty Milestone Approaching
+
+1. Log in to the **Loyalty Portal** (localhost:3002)
+2. On page load, a `points_balance_updated` event fires with `points_to_next_tier: 153`
+3. Since 153 < 500, the signal fires automatically — a violet "Double Points Weekend" offer appears
+
+### Active Driver → Rental + Service Offers
 
 1. Open the **Telemetry Simulator** (localhost:3003)
-2. Enter a userId from your demo session
-3. Click "Start Drive" in the Vehicle Telemetry panel — watch location events appear in the CDP Event Stream
-4. Switch to the Dealership panel, enter the same userId, click "Check In Customer"
-5. The "Dealership Walk-In" signal fires immediately
+2. Enter a userId linked to your demo profile, click "Start Drive"
+3. Let 10+ location updates accumulate (or click "Send Burst")
+4. Two offer cards appear in the Loyalty Portal: a rental 3× points card and a 500-bonus-points service card
+
+### Recent Renter Browsing → Trade-In Credit
+
+1. In the Telemetry Simulator, fire a `rental_ended` event for the logged-in user
+2. Then view 2+ vehicles on the Storefront
+3. A teal "$500 trade-in credit" offer appears in the Loyalty Portal
+
+### Dealership Walk-In → In-Store Exclusive
+
+1. Open the Telemetry Simulator → In-Store / Dealership panel
+2. Enter the userId and click "Check In"
+3. An amber pulsing "In-Store Exclusive — Valid Today Only" offer appears, expiring at midnight
+
+### Lapsed High-Value Customer → Win-Back
+
+1. POST two historical purchase events via the API with `occurredAt` timestamps 91+ days in the past
+2. The signal fires on the next event for that profile
+3. A slate "Welcome Back — 1,000 Points, On Us" offer appears
+
+### Resetting the Demo
+
+Click **Reset Demo Data** in the bottom-left corner of the CDP Platform. This clears all profiles, events, signal firings, and offers — while keeping signals and webhook subscriptions intact.
+
+---
+
+## Demo Guide
+
+The **Demo Guide** page (localhost:3004/demo) is a built-in reference that summarizes every signal: what triggers it, where to trigger it step-by-step, what the customer sees, and the current live firing count. Use it as a cheat sheet during demonstrations.
 
 ---
 
@@ -355,6 +423,18 @@ curl -X POST http://localhost:4000/signals \
 
 Instrument any system by POSTing to `/events`. Use `source: 'api'` for server-side calls, `source: 'iot'` for device telemetry, `source: 'pos'` for point-of-sale. Include a `deviceId` or `userId` to link events to an existing profile.
 
+### Connecting a New Downstream Consumer
+
+Register a webhook subscription for any signal:
+
+```bash
+curl -X POST http://localhost:4000/subscriptions \
+  -H 'Content-Type: application/json' \
+  -d '{ "signalId": "<uuid>", "targetUrl": "https://your-crm.com/hooks/nexus" }'
+```
+
+Your endpoint will receive HMAC-signed payloads for every firing. Wire it to your CRM, mobile push service, data warehouse, or in-store associate app.
+
 ---
 
 ## Tech Stack
@@ -387,7 +467,7 @@ For each service, click **+ New Service → GitHub Repo**, select `nexus-cdp`, a
 
 | Service name | Root Directory | Notes |
 |---|---|---|
-| `api` | `services/api` | Set `WEBHOOK_SIGNING_SECRET` |
+| `api` | `services/api` | Set `WEBHOOK_SIGNING_SECRET` and `WEBHOOK_OFFERS_URL` |
 | `signal-engine` | `services/signal-engine` | Worker — no public URL needed |
 | `webhook-dispatcher` | `services/webhook-dispatcher` | Worker — no public URL needed |
 | `platform` | `apps/platform` | CDP dashboard |
@@ -400,6 +480,7 @@ For each service, click **+ New Service → GitHub Repo**, select `nexus-cdp`, a
 **`api`, `signal-engine`, `webhook-dispatcher`** — `DATABASE_URL` and `REDIS_URL` are auto-injected by Railway plugins. Also set:
 ```
 WEBHOOK_SIGNING_SECRET=<random 32+ char string>
+WEBHOOK_OFFERS_URL=https://<your-api-service>.up.railway.app/webhooks/offers
 ```
 
 **All 4 Next.js apps** — set these on each:
@@ -408,16 +489,17 @@ NEXT_PUBLIC_CDP_API_URL=https://<your-api-service>.up.railway.app
 NEXT_PUBLIC_FP_API_KEY=<your Fingerprint.js Pro key>
 ```
 
-### 4. Run the database schema
+### 4. Deploy
 
-After `api` deploys for the first time, open its Railway shell and run:
-```bash
-psql $DATABASE_URL -f infra/postgres/schema.sql
-psql $DATABASE_URL -f infra/postgres/seed.sql
-```
+Railway uses the **GitHub App integration** (visible under your GitHub account → Integrations, not the Webhooks section). Every push to your default branch triggers a deploy. The API runs `migrate.ts` on startup, which:
+- Applies the schema
+- Seeds the 6 demo signals
+- Auto-seeds webhook subscriptions for all signals pointing to `WEBHOOK_OFFERS_URL`
+
+No manual `psql` commands needed.
 
 ### 5. Done
 
 Each service gets a `*.up.railway.app` URL. Share the four app URLs with your audience.
 
-> **Tip:** After the schema is loaded, the signal engine and webhook dispatcher will start processing automatically — no manual steps needed.
+> **Tip:** To reset the demo between presentations, click **Reset Demo Data** in the CDP Platform sidebar. Signals and webhook subscriptions are preserved; all customer data is cleared.

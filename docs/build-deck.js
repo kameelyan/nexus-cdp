@@ -495,7 +495,7 @@ function footerBar(slide, pageNum) {
 
   // Table header
   const cols = [2.8, 3.4, 2.8]; // widths
-  const headers = ["Signal Name", "Trigger", "Opportunity"];
+  const headers = ["Signal Name", "Trigger", "Offer Unlocked"];
   const xs = [0.4, 3.2, 6.6];
   const hdrY = 1.3;
 
@@ -511,12 +511,12 @@ function footerBar(slide, pageNum) {
   });
 
   const rows = [
-    ["High Purchase Intent", "3+ vehicle views + price check in 7 days", "Outreach from a sales advisor"],
-    ["Loyalty Milestone Approaching", "Within 500 pts of next tier", "Personalized nudge to earn more"],
-    ["Active Driver", "10+ location updates in 24 hours", "In-drive safety or convenience offer"],
-    ["Recent Renter Browsing", "Rental ended + viewing vehicles", "Trade-in or purchase conversation"],
-    ["Dealership Walk-In", "Physical store check-in", "Activate in-store associate alert"],
-    ["Lapsed High-Value Customer", "2+ purchases + 90 days silent", "Win-back campaign trigger"],
+    ["High Purchase Intent", "3+ vehicle views + price check in 7 days", "5% member discount — gold price on storefront + offer card"],
+    ["Loyalty Milestone Approaching", "Within 500 pts of next tier", "Double Points Weekend — book service for 2× points"],
+    ["Active Driver", "10+ location updates in 24 hours", "3× rental points + 500 bonus service points (2 cards)"],
+    ["Recent Renter Browsing", "Rental ended + viewing vehicles", "$500 trade-in credit toward any new Apex vehicle"],
+    ["Dealership Walk-In", "Physical store check-in", "Free appraisal + $250 accessories credit (today only)"],
+    ["Lapsed High-Value Customer", "2+ purchases + 90 days silent", "Welcome Back — 1,000 bonus loyalty points"],
   ];
 
   rows.forEach((row, ri) => {
@@ -535,7 +535,7 @@ function footerBar(slide, pageNum) {
     });
   });
 
-  s.addText("Signals are defined by your team, for your moments.", {
+  s.addText("Every signal automatically creates a personalized offer — in the loyalty portal and on the storefront.", {
     x: 0.4, y: 4.45, w: 9.2, h: 0.4,
     fontFace: FONT, fontSize: 11.5, italic: true, color: C.indigo, align: "center", margin: 0,
   });
@@ -618,7 +618,7 @@ function footerBar(slide, pageNum) {
   });
 
   // Bottom note
-  s.addText("Who can subscribe?  CRM systems · Marketing platforms · In-store associate apps · Mobile push services · Data warehouses — anything with an HTTP endpoint.", {
+  s.addText("Built-in: the Offer Engine subscribes to all 6 signals automatically — delivering personalized offers in real time to the loyalty portal and storefront. Any external system can subscribe too: CRM, push notifications, data warehouses, in-store apps.", {
     x: 0.4, y: 4.3, w: 9.2, h: 0.6,
     fontFace: FONT, fontSize: 12, color: C.offWhite, italic: true, margin: 0,
   });
@@ -627,7 +627,121 @@ function footerBar(slide, pageNum) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SLIDE 9 — THE DEMO
+// SLIDE 9 — OFFER ENGINE
+// ═══════════════════════════════════════════════════════════════
+{
+  const s = pres.addSlide();
+  s.background = { color: C.bgLight };
+
+  s.addText("From Signal to Personalized Offer — Automatically", {
+    x: 0.5, y: 0.28, w: 9, h: 0.52,
+    fontFace: FONT, fontSize: 24, bold: true, color: C.navy, margin: 0,
+  });
+  s.addText("Every signal firing creates a contextual offer in real time — visible in the loyalty portal and, where relevant, directly on the storefront.", {
+    x: 0.5, y: 0.82, w: 9, h: 0.38,
+    fontFace: FONT, fontSize: 12, color: C.muted, italic: true, margin: 0,
+  });
+
+  // Dual delivery model header
+  const cardY = 1.3;
+  // Push card
+  s.addShape(pres.shapes.RECTANGLE, {
+    x: 0.4, y: cardY, w: 4.3, h: 1.05,
+    fill: { color: C.white }, line: { color: C.indigo, width: 1.5 },
+    shadow: makeShadow(),
+  });
+  s.addShape(pres.shapes.RECTANGLE, {
+    x: 0.4, y: cardY, w: 4.3, h: 0.09,
+    fill: { color: C.indigo }, line: { color: C.indigo },
+  });
+  s.addText("Push  ·  Webhook delivers offer on every signal firing", {
+    x: 0.6, y: cardY + 0.12, w: 4.0, h: 0.35,
+    fontFace: FONT, fontSize: 12, bold: true, color: C.navy, margin: 0,
+  });
+  s.addText("All 6 signals auto-subscribed via WEBHOOK_OFFERS_URL on every deploy. Delivery log visible in CDP Platform.", {
+    x: 0.6, y: cardY + 0.47, w: 4.0, h: 0.48,
+    fontFace: FONT, fontSize: 10, color: "475569", margin: 0,
+  });
+
+  // Pull card
+  s.addShape(pres.shapes.RECTANGLE, {
+    x: 5.2, y: cardY, w: 4.4, h: 1.05,
+    fill: { color: C.white }, line: { color: C.green, width: 1.5 },
+    shadow: makeShadow(),
+  });
+  s.addShape(pres.shapes.RECTANGLE, {
+    x: 5.2, y: cardY, w: 4.4, h: 0.09,
+    fill: { color: C.green }, line: { color: C.green },
+  });
+  s.addText("Pull  ·  Sync on every portal poll (every 5s)", {
+    x: 5.4, y: cardY + 0.12, w: 4.1, h: 0.35,
+    fontFace: FONT, fontSize: 12, bold: true, color: C.navy, margin: 0,
+  });
+  s.addText("Portal checks active signal firings on each refresh — self-heals any missed webhooks automatically.", {
+    x: 5.4, y: cardY + 0.47, w: 4.1, h: 0.48,
+    fontFace: FONT, fontSize: 10, color: "475569", margin: 0,
+  });
+
+  // Offer cards rows
+  const offers = [
+    { signal: "High Purchase Intent", offer: "5% discount", detail: "Gold price on storefront · struck-through MSRP · banner", col: "6366F1" },
+    { signal: "Loyalty Milestone", offer: "Double Points Weekend", detail: "Book service this week to unlock the next tier", col: "7C3AED" },
+    { signal: "Active Driver", offer: "3× Rental Points + 500 Service Pts", detail: "Two separate offer cards appear simultaneously", col: "F59E0B" },
+    { signal: "Recent Renter Browsing", offer: "$500 Trade-In Credit", detail: "Valid for 30 days toward any new Apex purchase", col: "0D9488" },
+    { signal: "Dealership Walk-In", offer: "In-Store Exclusive (today only)", detail: "Pulsing amber badge · free appraisal · $250 accessories credit", col: "D97706" },
+    { signal: "Lapsed Customer", offer: "Welcome Back — 1,000 Points", detail: "Win-back card with 60-day expiry", col: "64748B" },
+  ];
+
+  const colsOW = [2.6, 2.4, 3.55];
+  const xsOW = [0.4, 3.05, 5.5];
+  const rowH = 0.38;
+  const tableY = 2.55;
+
+  // Header row
+  ["Signal", "Offer", "Surface / Detail"].forEach((h, i) => {
+    s.addShape(pres.shapes.RECTANGLE, {
+      x: xsOW[i], y: tableY, w: colsOW[i], h: 0.32,
+      fill: { color: C.navy }, line: { color: C.navy },
+    });
+    s.addText(h, {
+      x: xsOW[i] + 0.08, y: tableY, w: colsOW[i] - 0.08, h: 0.32,
+      fontFace: FONT, fontSize: 10, bold: true, color: C.white, valign: "middle", margin: 0,
+    });
+  });
+
+  offers.forEach((o, ri) => {
+    const rowY = tableY + 0.32 + ri * rowH;
+    const bg = ri % 2 === 0 ? C.white : "F8FAFC";
+    const cells = [o.signal, o.offer, o.detail];
+    cells.forEach((cell, ci) => {
+      s.addShape(pres.shapes.RECTANGLE, {
+        x: xsOW[ci], y: rowY, w: colsOW[ci], h: rowH,
+        fill: { color: bg }, line: { color: "E2E8F0" },
+      });
+      if (ci === 0) {
+        s.addShape(pres.shapes.RECTANGLE, {
+          x: xsOW[0], y: rowY, w: 0.07, h: rowH,
+          fill: { color: `${o.col}` }, line: { color: `${o.col}` },
+        });
+      }
+      s.addText(cell, {
+        x: xsOW[ci] + (ci === 0 ? 0.14 : 0.08), y: rowY, w: colsOW[ci] - (ci === 0 ? 0.18 : 0.12), h: rowH,
+        fontFace: FONT, fontSize: ci === 1 ? 9.5 : 9, bold: ci === 1,
+        color: ci === 0 ? C.navy : "475569", valign: "middle", margin: 0,
+      });
+    });
+  });
+
+  s.addText("One active offer per signal per profile — fire_count increments on repeat firings; no duplicates.", {
+    x: 0.4, y: 5.13, w: 9.2, h: 0.32,
+    fontFace: FONT, fontSize: 10.5, italic: true, color: C.indigo, align: "center", margin: 0,
+  });
+
+  footerBar(s, 9);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SLIDE 10 — THE DEMO
 // ═══════════════════════════════════════════════════════════════
 {
   const s = pres.addSlide();
@@ -639,10 +753,10 @@ function footerBar(slide, pageNum) {
   });
 
   const sites = [
-    { label: "A", name: "Apex Motors Storefront", port: "3001", icon: "🏎️", desc: "Browse vehicles, schedule service, track purchase intent signals in real time", col: C.indigo },
-    { label: "B", name: "Apex Rewards Portal", port: "3002", icon: "⭐", desc: "Loyalty dashboard with live cross-domain identity merge demonstration", col: C.amber },
-    { label: "C", name: "Telemetry Simulator", port: "3003", icon: "📡", desc: "Simulate car GPS, dealership visits, and rental events firing into the CDP", col: C.green },
-    { label: "D", name: "Nexus CDP Platform", port: "3004", icon: "🖥️", desc: "Live profile explorer, event stream, signal builder, and webhook manager", col: "8B5CF6" },
+    { label: "A", name: "Apex Motors Storefront", port: "3001", icon: "🏎️", desc: "Browse vehicles — active High Purchase Intent offer shows gold discounted price with struck-through MSRP across all listings", col: C.indigo },
+    { label: "B", name: "Apex Rewards Portal", port: "3002", icon: "⭐", desc: "Personalized offer cards appear in real time as signals fire — 6 signal types, live polling, no refresh needed", col: C.amber },
+    { label: "C", name: "Telemetry Simulator", port: "3003", icon: "📡", desc: "Simulate car GPS drives, dealership check-ins, and rental events — fires signals from the physical world", col: C.green },
+    { label: "D", name: "Nexus CDP Platform", port: "3004", icon: "🖥️", desc: "Profiles, live event stream, signal builder, webhook delivery log, and Demo Guide with step-by-step trigger instructions", col: "8B5CF6" },
   ];
 
   const positions = [
@@ -687,16 +801,16 @@ function footerBar(slide, pageNum) {
     });
   });
 
-  s.addText("All four sites share one CDP.  Watch the same customer recognized across every touchpoint.", {
+  s.addText("All four sites share one CDP.  Watch the same customer recognized across every touchpoint — with personalized offers appearing in real time.", {
     x: 0.4, y: 4.98, w: 9.2, h: 0.35,
     fontFace: FONT, fontSize: 12, italic: true, color: C.indigo, align: "center", margin: 0,
   });
 
-  footerBar(s, 9);
+  footerBar(s, 10);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SLIDE 10 — USE CASES
+// SLIDE 11 — USE CASES
 // ═══════════════════════════════════════════════════════════════
 {
   const s = pres.addSlide();
@@ -740,11 +854,11 @@ function footerBar(slide, pageNum) {
     fontFace: FONT, fontSize: 13, bold: true, color: C.amber, align: "center", margin: 0,
   });
 
-  footerBar(s, 10);
+  footerBar(s, 11);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SLIDE 11 — WHY NEXUS CDP
+// SLIDE 12 — WHY NEXUS CDP
 // ═══════════════════════════════════════════════════════════════
 {
   const s = pres.addSlide();
@@ -786,11 +900,11 @@ function footerBar(slide, pageNum) {
     });
   });
 
-  footerBar(s, 11);
+  footerBar(s, 12);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SLIDE 12 — NEXT STEPS
+// SLIDE 13 — NEXT STEPS
 // ═══════════════════════════════════════════════════════════════
 {
   const s = pres.addSlide();
@@ -854,7 +968,7 @@ function footerBar(slide, pageNum) {
     fontFace: FONT, fontSize: 18, bold: true, color: C.white, align: "center", valign: "middle", margin: 0,
   });
 
-  footerBar(s, 12);
+  footerBar(s, 13);
 }
 
 // ─── Write file ──────────────────────────────────────────────
