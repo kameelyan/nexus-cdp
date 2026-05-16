@@ -83,9 +83,11 @@ CREATE TABLE IF NOT EXISTS signal_rules (
   event_type  TEXT NOT NULL,
   min_count   INTEGER NOT NULL DEFAULT 1,
   conditions  JSONB NOT NULL DEFAULT '{}',
-  sort_order  INTEGER NOT NULL DEFAULT 0,
-  UNIQUE (signal_id, sort_order)
+  sort_order  INTEGER NOT NULL DEFAULT 0
 );
+
+ALTER TABLE signal_rules DROP CONSTRAINT IF EXISTS signal_rules_signal_id_sort_order_key;
+ALTER TABLE signal_rules ADD CONSTRAINT signal_rules_signal_id_sort_order_key UNIQUE (signal_id, sort_order);
 
 -- ----------------------------------------------------------------
 -- Signal Firings — audit log of every time a signal fired
