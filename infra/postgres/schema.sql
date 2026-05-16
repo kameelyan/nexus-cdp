@@ -149,11 +149,19 @@ CREATE TABLE IF NOT EXISTS profile_offers (
   description TEXT NOT NULL,
   cta         TEXT NOT NULL,
   category    TEXT NOT NULL,
+  fire_count  INTEGER NOT NULL DEFAULT 1,
   expires_at  TIMESTAMPTZ,
   claimed_at  TIMESTAMPTZ,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (firing_id, category)
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE profile_offers DROP CONSTRAINT IF EXISTS profile_offers_firing_id_category_key;
+ALTER TABLE profile_offers ADD COLUMN IF NOT EXISTS fire_count INTEGER NOT NULL DEFAULT 1;
 
 CREATE INDEX IF NOT EXISTS idx_profile_offers_profile_id ON profile_offers(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profile_offers_expires_at ON profile_offers(expires_at);
+
+-- One active (unclaimed) offer per profile+signal+category
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profile_offers_active_unique
+  ON profile_offers (profile_id, signal_id, category)
+  WHERE claimed_at IS NULL AND signal_id IS NOT NULL;

@@ -85,9 +85,13 @@ async function insertOffer(
 ): Promise<void> {
   await query(
     `INSERT INTO profile_offers
-       (offer_id, profile_id, signal_id, firing_id, title, description, cta, category, expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     ON CONFLICT (firing_id, category) DO NOTHING`,
+       (offer_id, profile_id, signal_id, firing_id, title, description, cta, category, expires_at, fire_count)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
+     ON CONFLICT (profile_id, signal_id, category) WHERE claimed_at IS NULL AND signal_id IS NOT NULL
+     DO UPDATE SET
+       fire_count = profile_offers.fire_count + 1,
+       firing_id  = EXCLUDED.firing_id,
+       expires_at = EXCLUDED.expires_at`,
     [
       uuidv4(), profileId, signalId, firingId,
       config.title, config.description, config.cta,
@@ -114,15 +118,15 @@ export async function createOfferForSignal(
 }
 
 export async function syncOffersForProfile(profileId: string): Promise<void> {
+  // Get the most recent active firing per signal — one upsert per signal, not per firing
   const r = await query<Record<string, unknown>>(
-    `SELECT sf.firing_id, sf.signal_id, s.name AS signal_name
+    `SELECT DISTINCT ON (sf.signal_id)
+       sf.firing_id, sf.signal_id, s.name AS signal_name
      FROM signal_firings sf
      JOIN signals s ON sf.signal_id = s.signal_id
      WHERE sf.profile_id = $1
        AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
-       AND NOT EXISTS (
-         SELECT 1 FROM profile_offers po WHERE po.firing_id = sf.firing_id
-       )`,
+     ORDER BY sf.signal_id, sf.fired_at DESC`,
     [profileId]
   );
   for (const row of r.rows) {
@@ -138,7 +142,7 @@ export async function syncOffersForProfile(profileId: string): Promise<void> {
 export async function getOffersForProfile(profileId: string) {
   await syncOffersForProfile(profileId);
   const r = await query<Record<string, unknown>>(
-    `SELECT offer_id, title, description, cta, category, expires_at, claimed_at, created_at
+    `SELECT offer_id, title, description, cta, category, fire_count, expires_at, claimed_at, created_at
      FROM profile_offers
      WHERE profile_id = $1
        AND (expires_at IS NULL OR expires_at > NOW())
@@ -152,6 +156,7 @@ export async function getOffersForProfile(profileId: string) {
     description: row.description as string,
     cta: row.cta as string,
     category: row.category as string,
+    fireCount: row.fire_count as number,
     expiresAt: row.expires_at ? (row.expires_at as Date).toISOString() : null,
     createdAt: (row.created_at as Date).toISOString(),
   }));

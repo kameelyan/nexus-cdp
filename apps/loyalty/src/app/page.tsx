@@ -11,6 +11,7 @@ interface Offer {
   description: string;
   cta: string;
   category: string;
+  fireCount: number;
   expiresAt: string | null;
 }
 
@@ -232,17 +233,24 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {offers.map((offer) => {
+              const fireCountBadge = offer.fireCount > 1 ? (
+                <span className="ml-auto text-xs font-bold text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full tabular-nums flex-shrink-0">
+                  ×{offer.fireCount} signals
+                </span>
+              ) : null;
+
               if (offer.category === 'milestone') {
                 return (
                   <div
                     key={offer.offerId}
                     className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1e1a35] border-violet-500/20"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-3 gap-2">
                       <span className="text-2xl">⭐</span>
                       <span className="bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
                         Tier Boost
                       </span>
+                      {fireCountBadge}
                     </div>
                     <h3 className="text-white font-bold text-base mb-2 leading-snug">{offer.title}</h3>
                     <p className="text-gray-400 text-sm leading-relaxed mb-5">{offer.description}</p>
@@ -264,11 +272,12 @@ export default function DashboardPage() {
                     key={offer.offerId}
                     className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1a2b2e] border-teal-500/20"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-3 gap-2">
                       <span className="text-2xl">🔑</span>
                       <span className="bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
                         $500 Credit
                       </span>
+                      {fireCountBadge}
                     </div>
                     <h3 className="text-white font-bold text-base mb-2 leading-snug">{offer.title}</h3>
                     <p className="text-gray-400 text-sm leading-relaxed mb-5">{offer.description}</p>
@@ -290,13 +299,14 @@ export default function DashboardPage() {
                     key={offer.offerId}
                     className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#2b1f0a] to-[#1a1a0e] border-amber-500/30 md:col-span-2"
                   >
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-4 gap-2">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">🏪</span>
                         <span className="bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide animate-pulse">
                           Valid Today Only
                         </span>
                       </div>
+                      {fireCountBadge}
                       <div className="text-right">
                         <p className="text-amber-400 text-2xl font-black leading-none">$250</p>
                         <p className="text-amber-600 text-xs mt-0.5">accessories credit</p>
@@ -324,13 +334,14 @@ export default function DashboardPage() {
                     key={offer.offerId}
                     className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1f1e2e] border-slate-500/30 md:col-span-2"
                   >
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-4 gap-2">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">💛</span>
                         <span className="bg-slate-500/20 border border-slate-500/30 text-slate-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
                           Welcome Back
                         </span>
                       </div>
+                      {fireCountBadge}
                       <div className="text-right">
                         <p className="text-[#f5c518] text-2xl font-black leading-none">+1,000</p>
                         <p className="text-[#f5c518]/60 text-xs mt-0.5">bonus points added</p>
@@ -358,13 +369,14 @@ export default function DashboardPage() {
                     key={offer.offerId}
                     className="relative rounded-2xl p-6 border overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#1a1f35] border-indigo-500/20 md:col-span-2"
                   >
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-4 gap-2">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">🏷️</span>
                         <span className="bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
                           Member Exclusive
                         </span>
                       </div>
+                      {fireCountBadge}
                       <div className="text-right">
                         <p className="text-gray-500 text-xs line-through">
                           From ${originalPrice.toLocaleString()}
@@ -407,7 +419,7 @@ export default function DashboardPage() {
                       : 'bg-gradient-to-br from-[#1a1a2e] to-[#2b1a1a] border-[#e94560]/20'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-3 gap-2">
                     <span className="text-2xl">{isRental ? '🚗' : '🔧'}</span>
                     <span
                       className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${
@@ -418,6 +430,7 @@ export default function DashboardPage() {
                     >
                       Active Driver Reward
                     </span>
+                    {fireCountBadge}
                   </div>
 
                   <h3 className="text-white font-bold text-base mb-2 leading-snug">
