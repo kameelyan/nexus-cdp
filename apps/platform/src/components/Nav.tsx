@@ -15,7 +15,7 @@ const links = [
   { href: '/release-notes', label: 'Release Notes', icon: '📋' },
 ];
 
-export default function Nav() {
+export default function Nav({ version }: { version: string }) {
   const pathname = usePathname();
   const [resetting, setResetting] = useState(false);
   const [resetDone, setResetDone] = useState(false);
@@ -90,7 +90,7 @@ export default function Nav() {
           <span className="text-sm leading-none">{resetDone ? '✓' : '↺'}</span>
           {resetting ? 'Resetting…' : resetDone ? 'Data cleared' : 'Reset Demo Data'}
         </button>
-        <p className="text-xs text-slate-600 px-1">Platform v1.0</p>
+        <p className="text-xs text-slate-600 px-1">Platform v{version}</p>
       </div>
     </nav>
   );

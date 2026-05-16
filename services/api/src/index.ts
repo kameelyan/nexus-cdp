@@ -28,7 +28,7 @@ await app.register(cors, {
 // ----------------------------------------------------------------
 // Health
 // ----------------------------------------------------------------
-app.get('/health', async () => ({ ok: true, ts: new Date().toISOString() }));
+app.get('/health', async () => ({ ok: true, version: process.env.npm_package_version, ts: new Date().toISOString() }));
 
 // ----------------------------------------------------------------
 // Events
