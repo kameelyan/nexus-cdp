@@ -10,10 +10,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nexus/types": "workspace:*",
     "@nexus/cdp-sdk": "workspace:*",
+    "@nexus/types": "workspace:*",
     "@nexus/ui": "workspace:*",
-    "next": "14.2.3",
+    "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
