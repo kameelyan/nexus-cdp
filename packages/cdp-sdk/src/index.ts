@@ -16,6 +16,10 @@ let _fpReady: Promise<void> | null = null;
 let _userId: string | undefined;
 
 async function initFingerprint(apiKey: string): Promise<void> {
+  if (!apiKey) {
+    console.info('[nexus-sdk] No FP.js API key — fingerprint disabled. Events will still be tracked via userId/deviceId.');
+    return;
+  }
   const fp = await FingerprintJS.load({ apiKey });
   const result = await fp.get();
   _fingerprint = result.visitorId;
