@@ -229,7 +229,16 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('[signal-engine] fatal', err);
-  process.exit(1);
-});
+async function run() {
+  const RETRY_DELAY_MS = 10_000;
+  while (true) {
+    try {
+      await main();
+    } catch (err) {
+      console.error(`[signal-engine] crashed — retrying in ${RETRY_DELAY_MS / 1000}s`, err);
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    }
+  }
+}
+
+run();
